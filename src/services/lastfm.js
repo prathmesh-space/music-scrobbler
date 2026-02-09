@@ -236,13 +236,13 @@ const apiRequest = async (params) => {
 };
 
 // Get authorization URL for OAuth
-export const getAuthUrl = () => {
+const getAuthUrl = () => {
   const callbackUrl = `${window.location.origin}/callback`;
   return `https://www.last.fm/api/auth/?api_key=${API_KEY}&cb=${callbackUrl}`;
 };
 
 // Get session token after OAuth callback
-export const getSession = async (token) => {
+const getSession = async (token) => {
   const signedParams = {
     method: 'auth.getSession',
     token: token,
@@ -263,7 +263,7 @@ export const getSession = async (token) => {
 };
 
 // Get user info
-export const getUserInfo = async (username) => {
+const getUserInfo = async (username) => {
   const data = await apiRequest({
     method: 'user.getInfo',
     user: username || getUsername(),
@@ -272,16 +272,18 @@ export const getUserInfo = async (username) => {
 };
 
 // Get recent tracks
-export const getRecentTracks = async (username, limit = 50, page = 1) => {
+const getRecentTracks = async (username, limit = 50, page = 1) => {
   const data = await apiRequest({
     method: 'user.getRecentTracks',
     user: username || getUsername(),
     limit: limit,
-@@ -152,26 +347,26 @@ export const getTrackInfo = async (artist, track, username) => {
-};
+  });
+    export const getTrackInfo = async (artist, track, username) => {
+
+    };
 
 // Search tracks
-export const searchTracks = async (query, limit = 30) => {
+const searchTracks = async (query, limit = 30) => {
   const data = await apiRequest({
     method: 'track.search',
     track: query,
@@ -291,12 +293,12 @@ export const searchTracks = async (query, limit = 30) => {
 };
 
 // Check if user is authenticated
-export const isAuthenticated = () => {
+const isAuthenticated = () => {
   return !!getSessionToken();
 };
 
 // Logout
-export const logout = () => {
+// const logout = () => {
   clearSessionToken();
   localStorage.removeItem('lastfm_username');
   localStorage.clear(); // Clear all cache
