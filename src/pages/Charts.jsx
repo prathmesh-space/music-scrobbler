@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react';
 import { getTopArtists, getTopAlbums, getTopTracks } from '../services/lastfm';
 import { TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-react';
+import {
+  buildSearchQuery,
+  getSpotifySearchUrl,
+  getYouTubeSearchUrl,
+} from '../utils/musicLinks';
+
 
 export default function Charts({ username }) {
  const [activeTab, setActiveTab] = useState('artists'); // artists, albums, tracks
@@ -128,12 +134,27 @@ export default function Charts({ username }) {
                       Plays
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
+                      Open
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
                       Trend
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.map((item, index) => (
+                    (() => {
+                      const artistName = item.artist?.name || item.artist?.['#text'];
+                      const query = buildSearchQuery({
+                        type: activeTab,
+                        name: item.name,
+                        artist: artistName,
+                      });
+                      const youTubeUrl = getYouTubeSearchUrl(query);
+                      const spotifyUrl = getSpotifySearchUrl(query);
+
+                      return (
+
                     <tr
                       key={index}
                       className="border-t border-gray-700 hover:bg-gray-700 transition"
@@ -156,12 +177,12 @@ export default function Charts({ username }) {
                             <p className="text-white font-semibold">{item.name}</p>
                             {activeTab === 'tracks' && (
                               <p className="text-gray-400 text-sm">
-                                {item.artist?.name || item.artist?.['#text']}
+                                {artistName}
                               </p>
                             )}
                             {activeTab === 'albums' && (
                               <p className="text-gray-400 text-sm">
-                                {item.artist?.name || item.artist?.['#text']}
+                                {artistName}
                               </p>
                             )}
                           </div>
@@ -172,8 +193,31 @@ export default function Charts({ username }) {
                           {parseInt(item.playcount).toLocaleString()}
                         </span>
                       </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-2">
+                          <a
+                            href={youTubeUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-3 py-1 text-xs font-semibold rounded-full bg-red-500/20 text-red-300 hover:bg-red-500/30 transition"
+                          >
+                            YouTube
+                          </a>
+                          <a
+                            href={spotifyUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-3 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-300 hover:bg-green-500/30 transition"
+                          >
+                            Spotify
+                          </a>
+                        </div>
+                      </td>
                       <td className="px-6 py-4">{getChangeIcon(index)}</td>
                     </tr>
+                    );
+                    })()
+
                   ))}
                 </tbody>
               </table>
