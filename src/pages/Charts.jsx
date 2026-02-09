@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { getTopArtists, getTopAlbums, getTopTracks } from '../services/lastfm';
 import { TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-react';
 
-const Charts = ({ username }) => {
-  const [activeTab, setActiveTab] = useState('artists'); // artists, albums, tracks
+export default function Charts({ username }) {
+ const [activeTab, setActiveTab] = useState('artists'); // artists, albums, tracks
   const [timePeriod, setTimePeriod] = useState('7day');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -189,6 +189,5 @@ const Charts = ({ username }) => {
       </div>
     </div>
   );
-};
 
-export default Charts;
+}
