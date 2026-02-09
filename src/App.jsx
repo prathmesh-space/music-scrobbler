@@ -1,8 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import  useAuth  from './hooks/useAuth.js';
-import LoginButton from './components/Auth/LoginButton.jsx';
-import Navbar from './components/Common/Navbar.jsx';
-import  Callback from './pages/Callback.jsx';
+import useAuth from './hooks/useAuth';
+import LoginButton from './components/Auth/LoginButton';
+import { Navbar } from './components/Common/Navbar';
+import Callback from './pages/Callback';
 import Home from './pages/Home';
 import { Loader2 } from 'lucide-react';
 
