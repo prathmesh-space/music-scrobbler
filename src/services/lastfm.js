@@ -277,10 +277,22 @@ const getRecentTracks = async (username, limit = 50, page = 1) => {
     method: 'user.getRecentTracks',
     user: username || getUsername(),
     limit: limit,
+    page: page,
   });
-    export const getTrackInfo = async (artist, track, username) => {
+   return data.recenttracks;
+};
 
-    };
+
+// Get track info
+const getTrackInfo = async (artist, track, username) => {
+  const data = await apiRequest({
+    method: 'track.getInfo',
+    artist: artist,
+    track: track,
+    username: username || getUsername(),
+  });
+  return data.track;
+};
 
 // Search tracks
 const searchTracks = async (query, limit = 30) => {
@@ -298,11 +310,22 @@ const isAuthenticated = () => {
 };
 
 // Logout
-// const logout = () => {
+  const logout = () => {
   clearSessionToken();
   localStorage.removeItem('lastfm_username');
   localStorage.clear(); // Clear all cache
 };
 
 // Export utilities
-export { getSessionToken, getUsername };
+export {
+  getSessionToken,
+  getUsername,
+  getAuthUrl,
+  getSession,
+  getUserInfo,
+  getRecentTracks,
+  getTrackInfo,
+  searchTracks,
+  isAuthenticated,
+  logout,
+};
