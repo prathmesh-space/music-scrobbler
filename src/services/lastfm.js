@@ -294,6 +294,7 @@ const getTrackInfo = async (artist, track, username) => {
   return data.track;
 };
 
+
 // Search tracks
 const searchTracks = async (query, limit = 30) => {
   const data = await apiRequest({
