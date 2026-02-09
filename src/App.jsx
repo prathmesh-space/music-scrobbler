@@ -1,10 +1,13 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './hooks/useAuth';
+import useAuth from './hooks/useAuth';
 import LoginButton from './components/Auth/LoginButton';
-import Navbar from './components/Common/Navbar';
+import { Navbar } from './components/Common/Navbar';
 import Callback from './pages/Callback';
 import Home from './pages/Home';
 import Charts from './pages/Charts';
+import Statistics from './pages/Statistics';
+import Collage from './pages/Collage';
+
 import { Loader2 } from 'lucide-react';
 
 function App() {
@@ -31,17 +34,13 @@ function App() {
           {isLoggedIn ? (
             <>
               <Route path="/" element={<Home username={username} />} />
-              <Route path="/charts" element={<Charts username={username} />} />
-              <Route path="/statistics" element={
+              <Route path="/charts" element={
                 <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-                  <h1 className="text-3xl text-white">Statistics - Coming Soon</h1>
+                  <h1 className="text-3xl text-white">Charts - Coming Soon</h1>
                 </div>
               } />
-              <Route path="/collage" element={
-                <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-                  <h1 className="text-3xl text-white">Collage Generator - Coming Soon</h1>
-                </div>
-              } />
+              <Route path="/statistics" element={<Statistics />} />
+              <Route path="/collage" element={<Collage username={username} />} />
               <Route path="*" element={<Navigate to="/" />} />
             </>
           ) : (

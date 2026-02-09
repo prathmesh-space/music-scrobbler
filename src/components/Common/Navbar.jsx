@@ -6,8 +6,8 @@ const navLinkClasses = ({ isActive }) =>
     isActive ? 'bg-purple-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-700'
   }`;
 
-export const Navbar = ({ username, onLogout }) => {
-  return (
+const Navbar = ({ username, onLogout }) => {
+    return (
     <header className="border-b border-gray-800 bg-gray-900">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
         <div className="flex items-center space-x-6">
@@ -60,3 +60,5 @@ export const Navbar = ({ username, onLogout }) => {
     </header>
   );
 };
+export { Navbar };
+export default Navbar;

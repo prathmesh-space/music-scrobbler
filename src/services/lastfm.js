@@ -263,6 +263,42 @@ const getRecentTracks = async (username, limit = 50, page = 1) => {
   });
    return data.recenttracks;
 };
+// Get top artists
+const getTopArtists = async (username, period = '7day', limit = 50, page = 1) => {
+  const data = await apiRequest({
+    method: 'user.getTopArtists',
+    user: username || getUsername(),
+    period,
+    limit,
+    page,
+  });
+  return data.topartists;
+};
+
+// Get top albums
+const getTopAlbums = async (username, period = '7day', limit = 50, page = 1) => {
+  const data = await apiRequest({
+    method: 'user.getTopAlbums',
+    user: username || getUsername(),
+    period,
+    limit,
+    page,
+  });
+  return data.topalbums;
+};
+
+// Get top tracks
+const getTopTracks = async (username, period = '7day', limit = 50, page = 1) => {
+  const data = await apiRequest({
+    method: 'user.getTopTracks',
+    user: username || getUsername(),
+    period,
+    limit,
+    page,
+  });
+  return data.toptracks;
+};
+
 
 
 // Get track info
@@ -307,6 +343,9 @@ export {
   getSession,
   getUserInfo,
   getRecentTracks,
+  getTopArtists,
+  getTopAlbums,
+  getTopTracks,
   getTrackInfo,
   searchTracks,
   isAuthenticated,

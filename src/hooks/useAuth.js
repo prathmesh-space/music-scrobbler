@@ -44,5 +44,5 @@ const useAuth = () => {
     logout: handleLogout,
   };
 };
-
+export { useAuth };
 export default useAuth;
