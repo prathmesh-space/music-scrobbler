@@ -5,180 +5,151 @@ const SHARED_SECRET = import.meta.env.VITE_LASTFM_SHARED_SECRET;
 const BASE_URL = 'https://ws.audioscrobbler.com/2.0/';
 
 const md5 = (string) => {
-  const rotateLeft = (value, shift) => (value << shift) | (value >>> (32 - shift));
-  const addUnsigned = (x, y) => {
-    const x4 = x & 0x40000000;
-    const y4 = y & 0x40000000;
-    const x8 = x & 0x80000000;
-    const y8 = y & 0x80000000;
-    const result = (x & 0x3fffffff) + (y & 0x3fffffff);
-    if (x4 & y4) {
-      return result ^ 0x80000000 ^ x8 ^ y8;
-    }
-    if (x4 | y4) {
-      return result ^ 0x40000000 ^ x8 ^ y8;
-    }
-    return result ^ x8 ^ y8;
+  const safeAdd = (x, y) => {
+    const lsw = (x & 0xffff) + (y & 0xffff);
+    const msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+    return (msw << 16) | (lsw & 0xffff);
   };
-  const convertToWordArray = (input) => {
-    const wordArray = [];
-    const messageLength = input.length;
-    for (let i = 0; i < messageLength - 3; i += 4) {
-      const value =
-        input.charCodeAt(i) |
-        (input.charCodeAt(i + 1) << 8) |
-        (input.charCodeAt(i + 2) << 16) |
-        (input.charCodeAt(i + 3) << 24);
-      wordArray.push(value);
+
+  const bitRotateLeft = (num, cnt) => (num << cnt) | (num >>> (32 - cnt));
+
+  const md5cmn = (q, a, b, x, s, t) => safeAdd(bitRotateLeft(safeAdd(safeAdd(a, q), safeAdd(x, t)), s), b);
+  const md5ff = (a, b, c, d, x, s, t) => md5cmn((b & c) | (~b & d), a, b, x, s, t);
+  const md5gg = (a, b, c, d, x, s, t) => md5cmn((b & d) | (c & ~d), a, b, x, s, t);
+  const md5hh = (a, b, c, d, x, s, t) => md5cmn(b ^ c ^ d, a, b, x, s, t);
+  const md5ii = (a, b, c, d, x, s, t) => md5cmn(c ^ (b | ~d), a, b, x, s, t);
+
+  const binlMD5 = (x, len) => {
+    x[len >> 5] |= 0x80 << len % 32;
+    x[(((len + 64) >>> 9) << 4) + 14] = len;
+
+    let i;
+    let olda;
+    let oldb;
+    let oldc;
+    let oldd;
+    let a = 1732584193;
+    let b = -271733879;
+    let c = -1732584194;
+    let d = 271733878;
+
+    for (i = 0; i < x.length; i += 16) {
+      olda = a;
+      oldb = b;
+      oldc = c;
+      oldd = d;
+
+      a = md5ff(a, b, c, d, x[i], 7, -680876936);
+      d = md5ff(d, a, b, c, x[i + 1], 12, -389564586);
+      c = md5ff(c, d, a, b, x[i + 2], 17, 606105819);
+      b = md5ff(b, c, d, a, x[i + 3], 22, -1044525330);
+      a = md5ff(a, b, c, d, x[i + 4], 7, -176418897);
+      d = md5ff(d, a, b, c, x[i + 5], 12, 1200080426);
+      c = md5ff(c, d, a, b, x[i + 6], 17, -1473231341);
+      b = md5ff(b, c, d, a, x[i + 7], 22, -45705983);
+      a = md5ff(a, b, c, d, x[i + 8], 7, 1770035416);
+      d = md5ff(d, a, b, c, x[i + 9], 12, -1958414417);
+      c = md5ff(c, d, a, b, x[i + 10], 17, -42063);
+      b = md5ff(b, c, d, a, x[i + 11], 22, -1990404162);
+      a = md5ff(a, b, c, d, x[i + 12], 7, 1804603682);
+      d = md5ff(d, a, b, c, x[i + 13], 12, -40341101);
+      c = md5ff(c, d, a, b, x[i + 14], 17, -1502002290);
+      b = md5ff(b, c, d, a, x[i + 15], 22, 1236535329);
+
+      a = md5gg(a, b, c, d, x[i + 1], 5, -165796510);
+      d = md5gg(d, a, b, c, x[i + 6], 9, -1069501632);
+      c = md5gg(c, d, a, b, x[i + 11], 14, 643717713);
+      b = md5gg(b, c, d, a, x[i], 20, -373897302);
+      a = md5gg(a, b, c, d, x[i + 5], 5, -701558691);
+      d = md5gg(d, a, b, c, x[i + 10], 9, 38016083);
+      c = md5gg(c, d, a, b, x[i + 15], 14, -660478335);
+      b = md5gg(b, c, d, a, x[i + 4], 20, -405537848);
+      a = md5gg(a, b, c, d, x[i + 9], 5, 568446438);
+      d = md5gg(d, a, b, c, x[i + 14], 9, -1019803690);
+      c = md5gg(c, d, a, b, x[i + 3], 14, -187363961);
+      b = md5gg(b, c, d, a, x[i + 8], 20, 1163531501);
+      a = md5gg(a, b, c, d, x[i + 13], 5, -1444681467);
+      d = md5gg(d, a, b, c, x[i + 2], 9, -51403784);
+      c = md5gg(c, d, a, b, x[i + 7], 14, 1735328473);
+      b = md5gg(b, c, d, a, x[i + 12], 20, -1926607734);
+
+      a = md5hh(a, b, c, d, x[i + 5], 4, -378558);
+      d = md5hh(d, a, b, c, x[i + 8], 11, -2022574463);
+      c = md5hh(c, d, a, b, x[i + 11], 16, 1839030562);
+      b = md5hh(b, c, d, a, x[i + 14], 23, -35309556);
+      a = md5hh(a, b, c, d, x[i + 1], 4, -1530992060);
+      d = md5hh(d, a, b, c, x[i + 4], 11, 1272893353);
+      c = md5hh(c, d, a, b, x[i + 7], 16, -155497632);
+      b = md5hh(b, c, d, a, x[i + 10], 23, -1094730640);
+      a = md5hh(a, b, c, d, x[i + 13], 4, 681279174);
+      d = md5hh(d, a, b, c, x[i], 11, -358537222);
+      c = md5hh(c, d, a, b, x[i + 3], 16, -722521979);
+      b = md5hh(b, c, d, a, x[i + 6], 23, 76029189);
+      a = md5hh(a, b, c, d, x[i + 9], 4, -640364487);
+      d = md5hh(d, a, b, c, x[i + 12], 11, -421815835);
+      c = md5hh(c, d, a, b, x[i + 15], 16, 530742520);
+      b = md5hh(b, c, d, a, x[i + 2], 23, -995338651);
+
+      a = md5ii(a, b, c, d, x[i], 6, -198630844);
+      d = md5ii(d, a, b, c, x[i + 7], 10, 1126891415);
+      c = md5ii(c, d, a, b, x[i + 14], 15, -1416354905);
+      b = md5ii(b, c, d, a, x[i + 5], 21, -57434055);
+      a = md5ii(a, b, c, d, x[i + 12], 6, 1700485571);
+      d = md5ii(d, a, b, c, x[i + 3], 10, -1894986606);
+      c = md5ii(c, d, a, b, x[i + 10], 15, -1051523);
+      b = md5ii(b, c, d, a, x[i + 1], 21, -2054922799);
+      a = md5ii(a, b, c, d, x[i + 8], 6, 1873313359);
+      d = md5ii(d, a, b, c, x[i + 15], 10, -30611744);
+      c = md5ii(c, d, a, b, x[i + 6], 15, -1560198380);
+      b = md5ii(b, c, d, a, x[i + 13], 21, 1309151649);
+      a = md5ii(a, b, c, d, x[i + 4], 6, -145523070);
+      d = md5ii(d, a, b, c, x[i + 11], 10, -1120210379);
+      c = md5ii(c, d, a, b, x[i + 2], 15, 718787259);
+      b = md5ii(b, c, d, a, x[i + 9], 21, -343485551);
+
+      a = safeAdd(a, olda);
+      b = safeAdd(b, oldb);
+      c = safeAdd(c, oldc);
+      d = safeAdd(d, oldd);
     }
-    let value = 0;
-    switch (messageLength % 4) {
-      case 0:
-        value = 0x080000000;
-        break;
-      case 1:
-        value = input.charCodeAt(messageLength - 1) | 0x0800000;
-        break;
-      case 2:
-        value = input.charCodeAt(messageLength - 2) | (input.charCodeAt(messageLength - 1) << 8) | 0x08000;
-        break;
-      case 3:
-        value =
-          input.charCodeAt(messageLength - 3) |
-          (input.charCodeAt(messageLength - 2) << 8) |
-          (input.charCodeAt(messageLength - 1) << 16) |
-          0x0800000;
-        break;
-      default:
-        break;
+
+  
+    return [a, b, c, d];
+    };
+    const rstr2binl = (input) => {
+    const output = [];
+    output[(input.length >> 2) - 1] = undefined;
+    for (let i = 0; i < output.length; i += 1) {
+      output[i] = 0;
     }
-    wordArray.push(value);
-    while ((wordArray.length % 16) !== 14) {
-      wordArray.push(0);
+    for (let i = 0; i < input.length * 8; i += 8) {
+      output[i >> 5] |= (input.charCodeAt(i / 8) & 0xff) << i % 32;
     }
-    wordArray.push(messageLength << 3);
-    wordArray.push(messageLength >>> 29);
-    return wordArray;
+    return output;
   };
-  const wordToHex = (value) => {
-    let hexValue = '';
-    for (let i = 0; i <= 3; i += 1) {
-      const byte = (value >>> (i * 8)) & 255;
-      const temp = `0${byte.toString(16)}`;
-      hexValue += temp.slice(-2);
+
+  const binl2rstr = (input) => {
+    let output = '';
+    for (let i = 0; i < input.length * 32; i += 8) {
+      output += String.fromCharCode((input[i >> 5] >>> i % 32) & 0xff);
     }
-    return hexValue;
+
+    return output;
   };
-  const utf8Encode = (input) => unescape(encodeURIComponent(input));
-  const message = utf8Encode(string);
-  const wordArray = convertToWordArray(message);
-  let a = 0x67452301;
-  let b = 0xefcdab89;
-  let c = 0x98badcfe;
-  let d = 0x10325476;
-  const S11 = 7;
-  const S12 = 12;
-  const S13 = 17;
-  const S14 = 22;
-  const S21 = 5;
-  const S22 = 9;
-  const S23 = 14;
-  const S24 = 20;
-  const S31 = 4;
-  const S32 = 11;
-  const S33 = 16;
-  const S34 = 23;
-  const S41 = 6;
-  const S42 = 10;
-  const S43 = 15;
-  const S44 = 21;
-  const F = (x, y, z) => (x & y) | (~x & z);
-  const G = (x, y, z) => (x & z) | (y & ~z);
-  const H = (x, y, z) => x ^ y ^ z;
-  const I = (x, y, z) => y ^ (x | ~z);
-  const FF = (aValue, bValue, cValue, dValue, xValue, s, ac) =>
-    addUnsigned(rotateLeft(addUnsigned(addUnsigned(aValue, F(bValue, cValue, dValue)), addUnsigned(xValue, ac)), s), bValue);
-  const GG = (aValue, bValue, cValue, dValue, xValue, s, ac) =>
-    addUnsigned(rotateLeft(addUnsigned(addUnsigned(aValue, G(bValue, cValue, dValue)), addUnsigned(xValue, ac)), s), bValue);
-  const HH = (aValue, bValue, cValue, dValue, xValue, s, ac) =>
-    addUnsigned(rotateLeft(addUnsigned(addUnsigned(aValue, H(bValue, cValue, dValue)), addUnsigned(xValue, ac)), s), bValue);
-  const II = (aValue, bValue, cValue, dValue, xValue, s, ac) =>
-    addUnsigned(rotateLeft(addUnsigned(addUnsigned(aValue, I(bValue, cValue, dValue)), addUnsigned(xValue, ac)), s), bValue);
-  for (let i = 0; i < wordArray.length; i += 16) {
-    const aValue = a;
-    const bValue = b;
-    const cValue = c;
-    const dValue = d;
-    a = FF(a, b, c, d, wordArray[i], S11, 0xd76aa478);
-    d = FF(d, a, b, c, wordArray[i + 1], S12, 0xe8c7b756);
-    c = FF(c, d, a, b, wordArray[i + 2], S13, 0x242070db);
-    b = FF(b, c, d, a, wordArray[i + 3], S14, 0xc1bdceee);
-    a = FF(a, b, c, d, wordArray[i + 4], S11, 0xf57c0faf);
-    d = FF(d, a, b, c, wordArray[i + 5], S12, 0x4787c62a);
-    c = FF(c, d, a, b, wordArray[i + 6], S13, 0xa8304613);
-    b = FF(b, c, d, a, wordArray[i + 7], S14, 0xfd469501);
-    a = FF(a, b, c, d, wordArray[i + 8], S11, 0x698098d8);
-    d = FF(d, a, b, c, wordArray[i + 9], S12, 0x8b44f7af);
-    c = FF(c, d, a, b, wordArray[i + 10], S13, 0xffff5bb1);
-    b = FF(b, c, d, a, wordArray[i + 11], S14, 0x895cd7be);
-    a = FF(a, b, c, d, wordArray[i + 12], S11, 0x6b901122);
-    d = FF(d, a, b, c, wordArray[i + 13], S12, 0xfd987193);
-    c = FF(c, d, a, b, wordArray[i + 14], S13, 0xa679438e);
-    b = FF(b, c, d, a, wordArray[i + 15], S14, 0x49b40821);
-    a = GG(a, b, c, d, wordArray[i + 1], S21, 0xf61e2562);
-    d = GG(d, a, b, c, wordArray[i + 6], S22, 0xc040b340);
-    c = GG(c, d, a, b, wordArray[i + 11], S23, 0x265e5a51);
-    b = GG(b, c, d, a, wordArray[i], S24, 0xe9b6c7aa);
-    a = GG(a, b, c, d, wordArray[i + 5], S21, 0xd62f105d);
-    d = GG(d, a, b, c, wordArray[i + 10], S22, 0x2441453);
-    c = GG(c, d, a, b, wordArray[i + 15], S23, 0xd8a1e681);
-    b = GG(b, c, d, a, wordArray[i + 4], S24, 0xe7d3fbc8);
-    a = GG(a, b, c, d, wordArray[i + 9], S21, 0x21e1cde6);
-    d = GG(d, a, b, c, wordArray[i + 14], S22, 0xc33707d6);
-    c = GG(c, d, a, b, wordArray[i + 3], S23, 0xf4d50d87);
-    b = GG(b, c, d, a, wordArray[i + 8], S24, 0x455a14ed);
-    a = GG(a, b, c, d, wordArray[i + 13], S21, 0xa9e3e905);
-    d = GG(d, a, b, c, wordArray[i + 2], S22, 0xfcefa3f8);
-    c = GG(c, d, a, b, wordArray[i + 7], S23, 0x676f02d9);
-    b = GG(b, c, d, a, wordArray[i + 12], S24, 0x8d2a4c8a);
-    a = HH(a, b, c, d, wordArray[i + 5], S31, 0xfffa3942);
-    d = HH(d, a, b, c, wordArray[i + 8], S32, 0x8771f681);
-    c = HH(c, d, a, b, wordArray[i + 11], S33, 0x6d9d6122);
-    b = HH(b, c, d, a, wordArray[i + 14], S34, 0xfde5380c);
-    a = HH(a, b, c, d, wordArray[i + 1], S31, 0xa4beea44);
-    d = HH(d, a, b, c, wordArray[i + 4], S32, 0x4bdecfa9);
-    c = HH(c, d, a, b, wordArray[i + 7], S33, 0xf6bb4b60);
-    b = HH(b, c, d, a, wordArray[i + 10], S34, 0xbebfbc70);
-    a = HH(a, b, c, d, wordArray[i + 13], S31, 0x289b7ec6);
-    d = HH(d, a, b, c, wordArray[i + 0], S32, 0xeaa127fa);
-    c = HH(c, d, a, b, wordArray[i + 3], S33, 0xd4ef3085);
-    b = HH(b, c, d, a, wordArray[i + 6], S34, 0x4881d05);
-    a = HH(a, b, c, d, wordArray[i + 9], S31, 0xd9d4d039);
-    d = HH(d, a, b, c, wordArray[i + 12], S32, 0xe6db99e5);
-    c = HH(c, d, a, b, wordArray[i + 15], S33, 0x1fa27cf8);
-    b = HH(b, c, d, a, wordArray[i + 2], S34, 0xc4ac5665);
-    a = II(a, b, c, d, wordArray[i + 0], S41, 0xf4292244);
-    d = II(d, a, b, c, wordArray[i + 7], S42, 0x432aff97);
-    c = II(c, d, a, b, wordArray[i + 14], S43, 0xab9423a7);
-    b = II(b, c, d, a, wordArray[i + 5], S44, 0xfc93a039);
-    a = II(a, b, c, d, wordArray[i + 12], S41, 0x655b59c3);
-    d = II(d, a, b, c, wordArray[i + 3], S42, 0x8f0ccc92);
-    c = II(c, d, a, b, wordArray[i + 10], S43, 0xffeff47d);
-    b = II(b, c, d, a, wordArray[i + 1], S44, 0x85845dd1);
-    a = II(a, b, c, d, wordArray[i + 8], S41, 0x6fa87e4f);
-    d = II(d, a, b, c, wordArray[i + 15], S42, 0xfe2ce6e0);
-    c = II(c, d, a, b, wordArray[i + 6], S43, 0xa3014314);
-    b = II(b, c, d, a, wordArray[i + 13], S44, 0x4e0811a1);
-    a = II(a, b, c, d, wordArray[i + 4], S41, 0xf7537e82);
-    d = II(d, a, b, c, wordArray[i + 11], S42, 0xbd3af235);
-    c = II(c, d, a, b, wordArray[i + 2], S43, 0x2ad7d2bb);
-    b = II(b, c, d, a, wordArray[i + 9], S44, 0xeb86d391);
-    a = addUnsigned(a, aValue);
-    b = addUnsigned(b, bValue);
-    c = addUnsigned(c, cValue);
-    d = addUnsigned(d, dValue);
-  }
-  return (wordToHex(a) + wordToHex(b) + wordToHex(c) + wordToHex(d)).toLowerCase();
+  const rstrMD5 = (input) => binl2rstr(binlMD5(rstr2binl(input), input.length * 8));
+  const rstr2hex = (input) => {
+    const hexTab = '0123456789abcdef';
+    let output = '';
+    for (let i = 0; i < input.length; i += 1) {
+      const x = input.charCodeAt(i);
+      output += hexTab.charAt((x >>> 4) & 0x0f) + hexTab.charAt(x & 0x0f);
+
+    }
+    return output;
+  };
+  const str2rstrUTF8 = (input) => unescape(encodeURIComponent(input));
+
+  return rstr2hex(rstrMD5(str2rstrUTF8(string)));
 };
 
 const createApiSignature = (params) => {
