@@ -228,18 +228,29 @@ const apiRequest = async (params) => {
         ...params,
       },
     });
-    return response.data;
+     const data = response.data;
+    if (data?.error) {
+      const apiError = new Error(data.message || 'Last.fm API error');
+      apiError.code = data.error;
+      throw apiError;
+    }
+    return data;
   } catch (error) {
-    console.error('Last.fm API Error:', error);
-    throw error;
+    const message = error.response?.data?.message || error.message || 'Last.fm API request failed';
+    const apiError = new Error(message);
+    apiError.status = error.response?.status;
+    apiError.code = error.response?.data?.error || error.code;
+    console.error('Last.fm API Error:', apiError);
+    throw apiError;
   }
 };
 
 // Get authorization URL for OAuth
 const getAuthUrl = () => {
   const callbackUrl = `${window.location.origin}/callback`;
-  return `https://www.last.fm/api/auth/?api_key=${API_KEY}&cb=${callbackUrl}`;
+  return `https://www.last.fm/api/auth/?api_key=${API_KEY}&cb=${encodeURIComponent(callbackUrl)}`;
 };
+
 
 // Get session token after OAuth callback
 const getSession = async (token) => {
