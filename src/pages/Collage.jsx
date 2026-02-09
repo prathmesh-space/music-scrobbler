@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react';
 import { getTopAlbums } from '../services/lastfm';
 import { Download, Grid3x3, Loader2 } from 'lucide-react';
+import { useEffect } from "react";
+
 
 const Collage = ({ username }) => {
   const [gridSize, setGridSize] = useState('3x3');
@@ -41,9 +43,6 @@ const Collage = ({ username }) => {
 
       setAlbums(albumsWithImages);
 
-      if (albumsWithImages.length > 0) {
-        await createCollageImage(albumsWithImages);
-      }
     } catch (error) {
       console.error('Error generating collage:', error);
     } finally {
@@ -58,6 +57,11 @@ const Collage = ({ username }) => {
     const canvasSize = albumSize * cols;
 
     const canvas = canvasRef.current;
+    if (!canvas) {
+  console.error("Canvas not ready");
+  setGenerating(false);
+  return;
+}
     canvas.width = canvasSize;
     canvas.height = canvasSize;
     const ctx = canvas.getContext('2d');
@@ -100,6 +104,14 @@ const Collage = ({ username }) => {
     link.href = canvas.toDataURL('image/png');
     link.click();
   };
+
+  useEffect(() => {
+  if (albums.length === 0) return;
+  if (!canvasRef.current) return;
+
+  createCollageImage(albums);
+}, [albums]);
+
 
   return (
     <div className="min-h-screen bg-gray-900 py-8 px-4">

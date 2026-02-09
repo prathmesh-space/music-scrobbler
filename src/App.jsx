@@ -35,9 +35,7 @@ function App() {
             <>
               <Route path="/" element={<Home username={username} />} />
               <Route path="/charts" element={
-                <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-                  <h1 className="text-3xl text-white">Charts - Coming Soon</h1>
-                </div>
+                <Charts username={username} />
               } />
               <Route path="/statistics" element={<Statistics />} />
               <Route path="/collage" element={<Collage username={username} />} />
