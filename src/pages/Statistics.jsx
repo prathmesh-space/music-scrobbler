@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getRecentTracks, getTopArtists } from '../services/lastfm';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { Loader2, Music, Calendar, TrendingUp } from 'lucide-react';
+import ListeningCalendar from '../components/Heatmap/ListeningCalender';
 
 const Statistics = ({ username }) => {
   const [loading, setLoading] = useState(true);
@@ -216,6 +217,9 @@ const Statistics = ({ username }) => {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
+        <div className="mt-8">
+          <ListeningCalendar username={username} />
         </div>
       </div>
     </div>
