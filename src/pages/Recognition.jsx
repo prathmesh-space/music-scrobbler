@@ -2,7 +2,86 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2, Mic, Music2, Square, Upload } from 'lucide-react';
 import { recognizeSong } from '../services/recognition';
 
+const MIN_RECORDING_SECONDS = 3;
+
 const formatArtists = (artists = []) => artists.map((artist) => artist.name).filter(Boolean).join(', ');
+
+const getRecorderMimeType = () => {
+  const preferredMimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'];
+  return preferredMimeTypes.find((mimeType) => MediaRecorder.isTypeSupported(mimeType)) || '';
+};
+
+const floatTo16BitPCM = (view, offset, input) => {
+  let position = offset;
+  for (let i = 0; i < input.length; i += 1, position += 2) {
+    const sample = Math.max(-1, Math.min(1, input[i]));
+    view.setInt16(position, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+  }
+};
+
+const interleaveChannels = (buffer) => {
+  if (buffer.numberOfChannels === 1) {
+    return buffer.getChannelData(0);
+  }
+
+  const left = buffer.getChannelData(0);
+  const right = buffer.getChannelData(1);
+  const interleaved = new Float32Array(left.length + right.length);
+
+  for (let i = 0, index = 0; i < left.length; i += 1) {
+    interleaved[index] = left[i];
+    interleaved[index + 1] = right[i];
+    index += 2;
+  }
+
+  return interleaved;
+};
+
+const audioBufferToWavBlob = (buffer) => {
+  const channelData = interleaveChannels(buffer);
+  const bytesPerSample = 2;
+  const blockAlign = buffer.numberOfChannels * bytesPerSample;
+  const byteRate = buffer.sampleRate * blockAlign;
+  const dataLength = channelData.length * bytesPerSample;
+  const wavBuffer = new ArrayBuffer(44 + dataLength);
+  const view = new DataView(wavBuffer);
+
+  const writeString = (offset, value) => {
+    for (let i = 0; i < value.length; i += 1) {
+      view.setUint8(offset + i, value.charCodeAt(i));
+    }
+  };
+
+  writeString(0, 'RIFF');
+  view.setUint32(4, 36 + dataLength, true);
+  writeString(8, 'WAVE');
+  writeString(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, buffer.numberOfChannels, true);
+  view.setUint32(24, buffer.sampleRate, true);
+  view.setUint32(28, byteRate, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, 16, true);
+  writeString(36, 'data');
+  view.setUint32(40, dataLength, true);
+  floatTo16BitPCM(view, 44, channelData);
+
+  return new Blob([wavBuffer], { type: 'audio/wav' });
+};
+
+const convertBlobToWavFile = async (blob) => {
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+  try {
+    const arrayBuffer = await blob.arrayBuffer();
+    const decodedAudio = await audioContext.decodeAudioData(arrayBuffer.slice(0));
+    const wavBlob = audioBufferToWavBlob(decodedAudio);
+    return new File([wavBlob], 'recording.wav', { type: 'audio/wav' });
+  } finally {
+    await audioContext.close();
+  }
+};
 
 const Recognition = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -15,6 +94,7 @@ const Recognition = () => {
   const mediaRecorderRef = useRef(null);
   const mediaStreamRef = useRef(null);
   const chunksRef = useRef([]);
+  const startedAtRef = useRef(0);
 
   useEffect(() => {
     if (!recording) return undefined;
@@ -26,10 +106,15 @@ const Recognition = () => {
     return () => window.clearInterval(timer);
   }, [recording]);
 
-  useEffect(() => () => {
-    mediaRecorderRef.current?.stop();
-    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
-  }, []);
+  useEffect(
+    () => () => {
+      if (mediaRecorderRef.current?.state === 'recording') {
+        mediaRecorderRef.current.stop();
+      }
+      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    },
+    []
+  );
 
   const fileInfo = useMemo(() => {
     if (!selectedFile) return null;
@@ -54,11 +139,13 @@ const Recognition = () => {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const mimeType = getRecorderMimeType();
+      const mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
 
       mediaStreamRef.current = stream;
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
+      startedAtRef.current = Date.now();
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data && event.data.size > 0) {
@@ -66,19 +153,35 @@ const Recognition = () => {
         }
       };
 
-      mediaRecorder.onstop = () => {
-        const mimeType = mediaRecorder.mimeType || 'audio/webm';
-        const extension = mimeType.includes('mp4') ? 'm4a' : 'webm';
-        const recordedBlob = new Blob(chunksRef.current, { type: mimeType });
-        const recordedFile = new File([recordedBlob], `recording.${extension}`, { type: mimeType });
+      mediaRecorder.onstop = async () => {
+        const elapsedSeconds = (Date.now() - startedAtRef.current) / 1000;
+        const recordedBlob = new Blob(chunksRef.current, { type: mediaRecorder.mimeType || 'audio/webm' });
 
-        setSelectedFile(recordedFile);
         setRecording(false);
         setRecordingTime(0);
 
         stream.getTracks().forEach((track) => track.stop());
         mediaStreamRef.current = null;
         mediaRecorderRef.current = null;
+
+        if (recordedBlob.size === 0) {
+          setError('Recording was empty. Please try again.');
+          return;
+        }
+
+        if (elapsedSeconds < MIN_RECORDING_SECONDS) {
+          setError(`Record at least ${MIN_RECORDING_SECONDS} seconds so fingerprint can be generated.`);
+          return;
+        }
+
+        try {
+          const wavFile = await convertBlobToWavFile(recordedBlob);
+          setSelectedFile(wavFile);
+        } catch {
+          const fallbackFile = new File([recordedBlob], 'recording.webm', { type: recordedBlob.type || 'audio/webm' });
+          setSelectedFile(fallbackFile);
+          setError('Saved recording in browser format. If recognition fails, try recording a clearer 5-10 second clip.');
+        }
       };
 
       mediaRecorder.start();
@@ -114,7 +217,12 @@ const Recognition = () => {
         setResult(response.result);
       }
     } catch (identifyError) {
-      setError(identifyError.message || 'Failed to identify song.');
+      const message = identifyError.message || 'Failed to identify song.';
+      if (message.toLowerCase().includes('fingerprint')) {
+        setError('Could not generate fingerprint. Try a louder 5-10 second recording and avoid background noise.');
+      } else {
+        setError(message);
+      }
       setResult(null);
     } finally {
       setLoading(false);
@@ -129,9 +237,7 @@ const Recognition = () => {
             <Music2 className="h-7 w-7 text-purple-400" />
             Song recognition
           </h1>
-          <p className="text-gray-300">
-            Upload a short audio clip and we&apos;ll identify the song with ACRCloud.
-          </p>
+          <p className="text-gray-300">Upload a short audio clip and we&apos;ll identify the song with ACRCloud.</p>
         </div>
 
         <form onSubmit={onIdentify} className="rounded-xl border border-gray-700 bg-gray-800 p-6">
