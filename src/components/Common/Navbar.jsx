@@ -33,6 +33,9 @@ const Navbar = ({ username, onLogout }) => {
             <NavLink to="/profile" className={navLinkClasses}>
               Profile
             </NavLink>
+            <NavLink to="/recommendations" className={navLinkClasses}>
+              Recommendations
+            </NavLink>
           </nav>
         </div>
         <div className="flex items-center space-x-4">
@@ -67,6 +70,9 @@ const Navbar = ({ username, onLogout }) => {
         </NavLink>
         <NavLink to="/profile" className={navLinkClasses}>
           Profile
+        </NavLink>
+        <NavLink to="/recommendations" className={navLinkClasses}>
+          Recs
         </NavLink>
       </nav>
     </header>
