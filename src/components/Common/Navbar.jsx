@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Check, LogOut, Settings } from 'lucide-react';
+import { Check, LogOut, Menu, Settings } from 'lucide-react';
 
 /* -------------------- helpers -------------------- */
 
@@ -29,6 +29,7 @@ const Navbar = ({
   onThemeChange,
 }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
   const isLight = activeTheme === 'light';
@@ -36,8 +37,8 @@ const Navbar = ({
   /* -------------------- styles -------------------- */
 
   const container = isLight
-    ? 'border-gray-200 bg-white'
-    : 'border-gray-800 bg-gray-900';
+    ? 'border-gray-200 bg-white/90 backdrop-blur'
+    : 'border-gray-800 bg-gray-900/80 backdrop-blur';
 
   const userText = isLight ? 'text-gray-600' : 'text-gray-300';
   const userName = isLight ? 'text-gray-900' : 'text-white';
@@ -77,7 +78,7 @@ const Navbar = ({
   /* -------------------- render -------------------- */
 
   return (
-    <header className={`border-b transition-colors ${container}`}>
+    <header className={`sticky top-0 z-40 border-b transition-colors ${container}`}>
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
         {/* Logo + desktop nav */}
         <div className="flex items-center space-x-6">
@@ -85,7 +86,7 @@ const Navbar = ({
             Music Scrobbler
           </Link>
 
-          <nav className="hidden space-x-2 md:flex">
+          <nav className="hidden space-x-2 lg:flex">
             {['/', '/charts', '/statistics', '/collage', '/friends', '/profile', '/recommendations', '/recognition'].map(
               (path, i) => (
                 <NavLink
@@ -103,6 +104,15 @@ const Navbar = ({
 
         {/* Right actions */}
         <div className="flex items-center space-x-4">
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((v) => !v)}
+            className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition lg:hidden ${buttonBase}`}
+          >
+            <Menu className="h-4 w-4" />
+            Menu
+          </button>
+
           <span className={`hidden text-sm sm:block ${userText}`}>
             Signed in as <span className={`font-semibold ${userName}`}>{username}</span>
           </span>
@@ -159,19 +169,24 @@ const Navbar = ({
       </div>
 
       {/* Mobile nav */}
-      <nav className={`flex justify-center gap-2 border-t px-4 py-3 md:hidden ${container}`}>
-        {['/', '/charts', '/statistics', '/collage', '/friends', '/profile', '/recommendations', '/recognition'].map(
-          (path, i) => (
-            <NavLink
-              key={path}
-              to={path}
-              end={i === 0}
-              className={navLinkClasses(isLight)}
-            >
-              {['Home', 'Charts', 'Stats', 'Collage', 'Friends', 'Profile', 'Recs', 'Recognize'][i]}
-            </NavLink>
-          )
-        )}
+      <nav
+        className={`border-t px-4 py-3 lg:hidden ${container} ${mobileMenuOpen ? 'block' : 'hidden'}`}
+      >
+        <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto pb-1">
+          {['/', '/charts', '/statistics', '/collage', '/friends', '/profile', '/recommendations', '/recognition'].map(
+            (path, i) => (
+              <NavLink
+                key={path}
+                to={path}
+                end={i === 0}
+                className={navLinkClasses(isLight)}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {['Home', 'Charts', 'Stats', 'Collage', 'Friends', 'Profile', 'Recs', 'Recognize'][i]}
+              </NavLink>
+            )
+          )}
+        </div>
       </nav>
     </header>
   );
