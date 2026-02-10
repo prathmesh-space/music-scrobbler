@@ -8,6 +8,7 @@ import Charts from './pages/Charts';
 import Statistics from './pages/Statistics';
 import Collage from './pages/Collage';
 import Friends from './pages/Friends';
+import Profile from './pages/Profile';
 
 
 
@@ -43,6 +44,7 @@ function App() {
               <Route path="/statistics" element={<Statistics username={username} />} />
               <Route path="/collage" element={<Collage username={username} />} />
               <Route path="/friends" element={<Friends username={username} />} />
+              <Route path="/profile" element={<Profile username={username} />} />
               <Route path="*" element={<Navigate to="/" />} />
             </>
           ) : (

@@ -7,7 +7,7 @@ const navLinkClasses = ({ isActive }) =>
   }`;
 
 const Navbar = ({ username, onLogout }) => {
-    return (
+  return (
     <header className="border-b border-gray-800 bg-gray-900">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
         <div className="flex items-center space-x-6">
@@ -29,6 +29,9 @@ const Navbar = ({ username, onLogout }) => {
             </NavLink>
             <NavLink to="/friends" className={navLinkClasses}>
               Friends
+            </NavLink>
+            <NavLink to="/profile" className={navLinkClasses}>
+              Profile
             </NavLink>
           </nav>
         </div>
@@ -60,11 +63,15 @@ const Navbar = ({ username, onLogout }) => {
           Collage
         </NavLink>
         <NavLink to="/friends" className={navLinkClasses}>
-              Friends
-            </NavLink>
+          Friends
+        </NavLink>
+        <NavLink to="/profile" className={navLinkClasses}>
+          Profile
+        </NavLink>
       </nav>
     </header>
   );
 };
+
 export { Navbar };
 export default Navbar;
