@@ -86,7 +86,7 @@ const Navbar = ({
           </Link>
 
           <nav className="hidden space-x-2 md:flex">
-            {['/', '/charts', '/statistics', '/collage', '/friends', '/profile', '/recommendations'].map(
+            {['/', '/charts', '/statistics', '/collage', '/friends', '/profile', '/recommendations', '/recognition'].map(
               (path, i) => (
                 <NavLink
                   key={path}
@@ -94,7 +94,7 @@ const Navbar = ({
                   end={i === 0}
                   className={navLinkClasses(isLight)}
                 >
-                  {['Home', 'Charts', 'Statistics', 'Collage', 'Friends', 'Profile', 'Recommendations'][i]}
+                  {['Home', 'Charts', 'Statistics', 'Collage', 'Friends', 'Profile', 'Recommendations', 'Recognition'][i]}
                 </NavLink>
               )
             )}
@@ -160,7 +160,7 @@ const Navbar = ({
 
       {/* Mobile nav */}
       <nav className={`flex justify-center gap-2 border-t px-4 py-3 md:hidden ${container}`}>
-        {['/', '/charts', '/statistics', '/collage', '/friends', '/profile', '/recommendations'].map(
+        {['/', '/charts', '/statistics', '/collage', '/friends', '/profile', '/recommendations', '/recognition'].map(
           (path, i) => (
             <NavLink
               key={path}
@@ -168,7 +168,7 @@ const Navbar = ({
               end={i === 0}
               className={navLinkClasses(isLight)}
             >
-              {['Home', 'Charts', 'Stats', 'Collage', 'Friends', 'Profile', 'Recs'][i]}
+              {['Home', 'Charts', 'Stats', 'Collage', 'Friends', 'Profile', 'Recs', 'Recognize'][i]}
             </NavLink>
           )
         )}

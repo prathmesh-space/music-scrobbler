@@ -14,3 +14,16 @@ The React Compiler is not enabled on this template because of its impact on dev 
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+
+## ACRCloud song recognition setup
+
+Add these Vite environment variables in a `.env` file:
+
+```bash
+VITE_ACR_ACCESS_KEY=your_access_key
+VITE_ACR_ACCESS_SECRET=your_access_secret
+VITE_ACR_HOST=identify-eu-west-1.acrcloud.com
+```
+
+Then start the app and open the **Recognition** page from the navbar to upload an audio clip and identify a song.

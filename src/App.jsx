@@ -10,6 +10,7 @@ import Collage from './pages/Collage';
 import Friends from './pages/Friends';
 import Profile from './pages/Profile';
 import Recommendations from './pages/Recommendations';
+import Recognition from './pages/Recognition';
 
 import { Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -83,6 +84,7 @@ function App() {
               <Route path="/friends" element={<Friends username={username} />} />
               <Route path="/profile" element={<Profile username={username} />} />
               <Route path="/recommendations" element={<Recommendations />} />
+              <Route path="/recognition" element={<Recognition />} />
               <Route path="*" element={<Navigate to="/" />} />
             </>
           ) : (
