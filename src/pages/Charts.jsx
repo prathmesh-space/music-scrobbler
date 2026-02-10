@@ -7,6 +7,7 @@ import {
   getYouTubeSearchUrl,
 } from '../utils/musicLinks';
 import { getLastFmImageUrl } from '../utils/lastfmImage.js';
+import { getSpotifyArtistImage } from '../services/spotify';
 
 
 export default function Charts({ username }) {
@@ -14,6 +15,8 @@ export default function Charts({ username }) {
   const [timePeriod, setTimePeriod] = useState('7day');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [spotifyArtistImages, setSpotifyArtistImages] = useState({});
 
   const periods = [
     { value: '7day', label: '7 Days' },
@@ -27,6 +30,44 @@ export default function Charts({ username }) {
   useEffect(() => {
     fetchChartData();
   }, [activeTab, timePeriod, username]);
+
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const hydrateSpotifyArtistImages = async () => {
+      const artistNames = data
+        .map((item) => item.name)
+        .filter(Boolean);
+
+      const uniqueArtists = [...new Set(artistNames)]
+        .filter((artistName) => !spotifyArtistImages[artistName]);
+
+      if (uniqueArtists.length === 0) return;
+
+      const resolved = await Promise.all(
+        uniqueArtists.map(async (artistName) => [artistName, await getSpotifyArtistImage(artistName)])
+      );
+
+      if (cancelled) return;
+
+      setSpotifyArtistImages((previous) => {
+        const next = { ...previous };
+        resolved.forEach(([artistName, imageUrl]) => {
+          if (imageUrl) next[artistName] = imageUrl;
+        });
+        return next;
+      });
+    };
+
+    if (activeTab === 'artists' && data.length > 0) {
+      hydrateSpotifyArtistImages();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, data, spotifyArtistImages]);
 
   const fetchChartData = async () => {
     setLoading(true);
@@ -152,7 +193,7 @@ export default function Charts({ username }) {
                         name: item.name,
                         artist: artistName,
                       });
-                      const imageUrl = getLastFmImageUrl(item.image);
+                      const imageUrl = getLastFmImageUrl(item.image) || (activeTab === 'artists' ? spotifyArtistImages[item.name] : '');
                       const youTubeUrl = getYouTubeSearchUrl(query);
                       const spotifyUrl = getSpotifySearchUrl(query);
 
