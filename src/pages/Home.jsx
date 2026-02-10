@@ -6,6 +6,7 @@ import {
   getSpotifySearchUrl,
   getYouTubeSearchUrl,
 } from '../utils/musicLinks';
+import { getLastFmImageUrl } from '../utils/lastfmImage.js';
 
 const Home = ({ username }) => {
   const [userInfo, setUserInfo] = useState(null);
@@ -32,6 +33,8 @@ const Home = ({ username }) => {
     if (username) fetchData();
   }, [username]);
 
+  const userImage = getLastFmImageUrl(userInfo?.image);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -47,9 +50,9 @@ const Home = ({ username }) => {
         {/* User Info */}
         <div className="bg-gray-800 rounded-lg p-6 mb-8 border border-gray-700">
           <div className="flex items-center space-x-4 mb-6">
-            {userInfo?.image?.[3]?.['#text'] && (
+            {userImage && (
               <img
-                src={userInfo.image[3]['#text']}
+                src={userImage}
                 alt={userInfo.name}
                 className="w-20 h-20 rounded-full border-4 border-purple-400"
               />
@@ -91,6 +94,7 @@ const Home = ({ username }) => {
             {recentTracks.map((track, index) => {
               const artistName = track.artist?.['#text'] || track.artist?.name;
               const albumName = track.album?.['#text'];
+              const trackImage = getLastFmImageUrl(track.image);
 
               const trackQuery = buildSearchQuery({
                 type: 'tracks',
@@ -117,7 +121,7 @@ const Home = ({ username }) => {
                   className="flex items-center space-x-4 bg-gray-700 rounded-lg p-4 hover:bg-gray-600 transition"
                 >
                   <img
-                    src={track.image?.[2]?.['#text'] || '/placeholder.png'}
+                    src={trackImage || '/placeholder.png'}
                     alt={track.name}
                     className="w-16 h-16 rounded"
                   />
@@ -169,17 +173,21 @@ const Home = ({ username }) => {
 
 /* Small reusable components */
 
-const Stat = ({ icon: Icon, label, value }) => (
-  <div className="bg-gray-700 rounded-lg p-4">
-    <div className="flex items-center space-x-2 mb-2">
-      <Icon className="w-5 h-5 text-purple-400" />
-      <span className="text-gray-400">{label}</span>
+const Stat = ({ icon, label, value }) => {
+  const IconComponent = icon;
+
+  return (
+    <div className="bg-gray-700 rounded-lg p-4">
+      <div className="flex items-center space-x-2 mb-2">
+        {IconComponent ? <IconComponent className="w-5 h-5 text-purple-400" /> : null}
+        <span className="text-gray-400">{label}</span>
+      </div>
+      <p className="text-2xl font-bold text-white">
+        {value?.toString?.() || value}
+      </p>
     </div>
-    <p className="text-2xl font-bold text-white">
-      {value?.toString?.() || value}
-    </p>
-  </div>
-);
+  );
+};
 
 const MusicLink = ({ label, url, color, light }) => (
   <a

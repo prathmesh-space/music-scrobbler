@@ -6,6 +6,7 @@ import {
   getSpotifySearchUrl,
   getYouTubeSearchUrl,
 } from '../utils/musicLinks';
+import { getLastFmImageUrl } from '../utils/lastfmImage.js';
 
 
 export default function Charts({ username }) {
@@ -48,13 +49,14 @@ export default function Charts({ username }) {
     }
   };
 
-  const getChangeIcon = (rank) => {
+  const getChangeIcon = () => {
     // Simulated change indicator (you can enhance this with historical data)
     const change = Math.random() * 10 - 5;
     if (change > 2) return <TrendingUp className="w-4 h-4 text-green-400" />;
     if (change < -2) return <TrendingDown className="w-4 h-4 text-red-400" />;
     return <Minus className="w-4 h-4 text-gray-400" />;
   };
+
 
   return (
     <div className="min-h-screen bg-gray-900 py-8 px-4">
@@ -150,6 +152,7 @@ export default function Charts({ username }) {
                         name: item.name,
                         artist: artistName,
                       });
+                      const imageUrl = getLastFmImageUrl(item.image);
                       const youTubeUrl = getYouTubeSearchUrl(query);
                       const spotifyUrl = getSpotifySearchUrl(query);
 
@@ -166,12 +169,16 @@ export default function Charts({ username }) {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-4">
-                          {item.image?.[2]?.['#text'] && (
+                          {imageUrl ? (
                             <img
-                              src={item.image[2]['#text']}
+                              src={imageUrl}
                               alt={item.name}
                               className="w-12 h-12 rounded"
                             />
+                          ) : (
+                            <div className="w-12 h-12 rounded bg-gray-700 flex items-center justify-center text-xs font-semibold text-gray-300">
+                              {item.name?.slice(0, 2).toUpperCase()}
+                            </div>
                           )}
                           <div>
                             <p className="text-white font-semibold">{item.name}</p>

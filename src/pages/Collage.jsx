@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getTopAlbums, getTopArtists, getTopTracks } from '../services/lastfm';
 import { Download, Grid3x3, Loader2 } from 'lucide-react';
+import { getLastFmImageUrl } from '../utils/lastfmImage.js';
 
 const collageTypes = [
   { value: 'albums', label: 'Albums' },
@@ -49,7 +50,10 @@ const Collage = ({ username }) => {
       const response = await fetcher(username, timePeriod, total);
       const rawItems = response[key] || [];
 
-      const itemsWithImages = rawItems.filter((item) => item.image?.[3]?.['#text']).slice(0, total);
+      const itemsWithImages = rawItems
+        .map((item) => ({ ...item, imageUrl: getLastFmImageUrl(item.image) }))
+        .filter((item) => item.imageUrl)
+        .slice(0, total);
       setItems(itemsWithImages);
     } catch (error) {
       console.error('Error generating collage:', error);
@@ -81,7 +85,7 @@ const Collage = ({ username }) => {
           img.crossOrigin = 'anonymous';
           img.onload = () => resolve(img);
           img.onerror = reject;
-          img.src = item.image[3]['#text'];
+          img.src = item.imageUrl;
         })
     );
 
