@@ -27,6 +27,9 @@ const Navbar = ({ username, onLogout }) => {
             <NavLink to="/collage" className={navLinkClasses}>
               Collage
             </NavLink>
+            <NavLink to="/friends" className={navLinkClasses}>
+              Friends
+            </NavLink>
           </nav>
         </div>
         <div className="flex items-center space-x-4">
@@ -56,6 +59,9 @@ const Navbar = ({ username, onLogout }) => {
         <NavLink to="/collage" className={navLinkClasses}>
           Collage
         </NavLink>
+        <NavLink to="/friends" className={navLinkClasses}>
+              Friends
+            </NavLink>
       </nav>
     </header>
   );

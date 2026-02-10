@@ -7,6 +7,9 @@ import Home from './pages/Home';
 import Charts from './pages/Charts';
 import Statistics from './pages/Statistics';
 import Collage from './pages/Collage';
+import Friends from './pages/Friends';
+
+
 
 import { Loader2 } from 'lucide-react';
 
@@ -37,8 +40,9 @@ function App() {
               <Route path="/charts" element={
                 <Charts username={username} />
               } />
-              <Route path="/statistics" element={<Statistics />} />
+              <Route path="/statistics" element={<Statistics username={username} />} />
               <Route path="/collage" element={<Collage username={username} />} />
+              <Route path="/friends" element={<Friends username={username} />} />
               <Route path="*" element={<Navigate to="/" />} />
             </>
           ) : (

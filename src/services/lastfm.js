@@ -263,6 +263,18 @@ const getRecentTracks = async (username, limit = 50, page = 1) => {
   });
    return data.recenttracks;
 };
+
+// Get friends
+const getFriends = async (username, limit = 50, page = 1) => {
+  const data = await apiRequest({
+    method: 'user.getFriends',
+    user: username || getUsername(),
+    limit,
+    page,
+  });
+  return data.friends;
+};
+
 // Get top artists
 const getTopArtists = async (username, period = '7day', limit = 50, page = 1) => {
   const data = await apiRequest({
@@ -347,6 +359,7 @@ export {
   getTopAlbums,
   getTopTracks,
   getTrackInfo,
+  getFriends,
   searchTracks,
   isAuthenticated,
   logout,

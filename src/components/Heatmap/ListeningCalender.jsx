@@ -127,9 +127,10 @@ const ListeningCalendar = ({ username, embedded = false }) => {
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-6">
           <div className="overflow-x-auto">
             <div className="inline-flex gap-1">
-              {week.map((day) => (
-                <div key={weekIndex} className="flex flex-col gap-1">
-                  {week.map((day, dayIndex) => (
+              {weeks.map((week, weekIndex) => (
+                <div key={`week-${weekIndex}`} className="flex flex-col gap-1">
+                  {week.map((day) => (
+
                     <div
                       key={day.date}
                       onClick={() => setSelectedDay(day)}
