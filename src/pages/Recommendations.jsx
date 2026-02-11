@@ -34,15 +34,6 @@ const RECOMMENDATION_LIBRARY = [
   { title: 'On Melancholy Hill', artist: 'Gorillaz', relatedTo: ['m83', 'glass animals'] },
 ];
 
-const shuffle = (items) => {
-  const copy = [...items];
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-};
-
 const normalize = (value) => (value || '').toLowerCase().trim();
 
 const buildTasteSignature = (topArtists, topTracks) => {
@@ -80,12 +71,35 @@ const scoreRecommendation = (item, taste) => {
   return score;
 };
 
+<<<<<<< ours
+=======
+const hashString = (input) => {
+  let hash = 0;
+  for (let i = 0; i < input.length; i += 1) {
+    hash = (hash << 5) - hash + input.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+};
+
+const sortBySeed = (items, seed) =>
+  [...items].sort((a, b) => {
+    const aHash = hashString(`${seed}:${a.title}:${a.artist}`);
+    const bHash = hashString(`${seed}:${b.title}:${b.artist}`);
+    return aHash - bHash;
+  });
+
+>>>>>>> theirs
 export default function Recommendations({ username }) {
   const [rankedRecommendations, setRankedRecommendations] = useState([]);
   const [topTasteArtists, setTopTasteArtists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [discoveryLevel, setDiscoveryLevel] = useState(45);
+<<<<<<< ours
+=======
+  const [blendSeed, setBlendSeed] = useState(0);
+>>>>>>> theirs
 
   const loadTasteProfile = useCallback(async () => {
     try {
@@ -110,11 +124,21 @@ export default function Recommendations({ username }) {
 
       setRankedRecommendations(ranked);
       setTopTasteArtists(topArtists.slice(0, 3).map((artist) => artist.name));
+<<<<<<< ours
     } catch (err) {
       console.error('Failed to generate personalized recommendations:', err);
       setError('Could not personalize recommendations right now. Showing random picks instead.');
       setRankedRecommendations(shuffle(RECOMMENDATION_LIBRARY).map((item) => ({ ...item, score: 0 })));
       setTopTasteArtists([]);
+=======
+      setBlendSeed((currentSeed) => currentSeed + 1);
+    } catch (err) {
+      console.error('Failed to generate personalized recommendations:', err);
+      setError('Could not personalize recommendations right now. Showing random picks instead.');
+      setRankedRecommendations(RECOMMENDATION_LIBRARY.map((item) => ({ ...item, score: 0 })));
+      setTopTasteArtists([]);
+      setBlendSeed((currentSeed) => currentSeed + 1);
+>>>>>>> theirs
     } finally {
       setLoading(false);
     }
@@ -130,22 +154,46 @@ export default function Recommendations({ username }) {
     const explorationCount = Math.round(safeLimit * discoveryRatio);
     const familiarityCount = safeLimit - explorationCount;
 
+<<<<<<< ours
     const familiarPool = rankedRecommendations.filter((item) => item.score > 0);
     const discoveryPool = rankedRecommendations.filter((item) => item.score === 0);
 
     const selected = [
       ...shuffle(familiarPool).slice(0, familiarityCount),
       ...shuffle(discoveryPool).slice(0, explorationCount),
+=======
+    const familiarPool = sortBySeed(
+      rankedRecommendations.filter((item) => item.score > 0),
+      `familiar-${blendSeed}-${discoveryLevel}`,
+    );
+    const discoveryPool = sortBySeed(
+      rankedRecommendations.filter((item) => item.score === 0),
+      `discovery-${blendSeed}-${discoveryLevel}`,
+    );
+
+    const selected = [
+      ...familiarPool.slice(0, familiarityCount),
+      ...discoveryPool.slice(0, explorationCount),
+>>>>>>> theirs
     ];
 
     if (selected.length < safeLimit) {
       const used = new Set(selected.map((item) => `${item.title}-${item.artist}`));
+<<<<<<< ours
       const fallback = shuffle(rankedRecommendations).filter((item) => !used.has(`${item.title}-${item.artist}`));
+=======
+      const fallback = sortBySeed(rankedRecommendations, `fallback-${blendSeed}-${discoveryLevel}`)
+        .filter((item) => !used.has(`${item.title}-${item.artist}`));
+>>>>>>> theirs
       return [...selected, ...fallback].slice(0, safeLimit);
     }
 
     return selected.slice(0, safeLimit);
+<<<<<<< ours
   }, [discoveryLevel, rankedRecommendations]);
+=======
+  }, [blendSeed, discoveryLevel, rankedRecommendations]);
+>>>>>>> theirs
 
   const tasteSummary = useMemo(() => {
     if (topTasteArtists.length) {
@@ -197,6 +245,10 @@ export default function Recommendations({ username }) {
                   step="5"
                   value={discoveryLevel}
                   onChange={(event) => setDiscoveryLevel(Number(event.target.value))}
+<<<<<<< ours
+=======
+                  aria-label="Discovery level"
+>>>>>>> theirs
                   className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-700 accent-purple-400"
                 />
               </div>
