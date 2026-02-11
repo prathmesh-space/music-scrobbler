@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Loader2, RefreshCw, ExternalLink, Sparkles, AlertTriangle } from 'lucide-react';
 import { getTopArtists, getTopTracks } from '../services/lastfm';
 import {
@@ -80,27 +80,14 @@ const scoreRecommendation = (item, taste) => {
   return score;
 };
 
-const createRecommendations = (library, taste, limit = 8) => {
-  const ranked = library
-    .map((item) => ({
-      ...item,
-      score: scoreRecommendation(item, taste),
-    }))
-    .sort((a, b) => b.score - a.score);
-
-  const topRanked = ranked.filter((item) => item.score > 0);
-  const fallback = shuffle(ranked.filter((item) => item.score === 0));
-
-  return [...topRanked, ...fallback].slice(0, limit);
-};
-
 export default function Recommendations({ username }) {
-  const [recommendations, setRecommendations] = useState([]);
-  const [tasteSummary, setTasteSummary] = useState('');
+  const [rankedRecommendations, setRankedRecommendations] = useState([]);
+  const [topTasteArtists, setTopTasteArtists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [discoveryLevel, setDiscoveryLevel] = useState(45);
 
-  const generateForTaste = async () => {
+  const loadTasteProfile = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -114,28 +101,58 @@ export default function Recommendations({ username }) {
       const topTracks = topTracksData?.track || [];
 
       const signature = buildTasteSignature(topArtists, topTracks);
-      const picks = createRecommendations(RECOMMENDATION_LIBRARY, signature, 8);
+      const ranked = RECOMMENDATION_LIBRARY
+        .map((item) => ({
+          ...item,
+          score: scoreRecommendation(item, signature),
+        }))
+        .sort((a, b) => b.score - a.score);
 
-      setRecommendations(picks);
-      setTasteSummary(
-        topArtists.length
-          ? `Based on your taste: ${topArtists.slice(0, 3).map((artist) => artist.name).join(', ')}`
-          : 'Showing a fresh random mix while we learn your taste.',
-      );
+      setRankedRecommendations(ranked);
+      setTopTasteArtists(topArtists.slice(0, 3).map((artist) => artist.name));
     } catch (err) {
       console.error('Failed to generate personalized recommendations:', err);
       setError('Could not personalize recommendations right now. Showing random picks instead.');
-      setRecommendations(shuffle(RECOMMENDATION_LIBRARY).slice(0, 8));
-      setTasteSummary('Showing a fresh random mix while personalization is unavailable.');
+      setRankedRecommendations(shuffle(RECOMMENDATION_LIBRARY).map((item) => ({ ...item, score: 0 })));
+      setTopTasteArtists([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [username]);
 
   useEffect(() => {
-    generateForTaste();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [username]);
+    loadTasteProfile();
+  }, [loadTasteProfile]);
+
+  const recommendations = useMemo(() => {
+    const safeLimit = 8;
+    const discoveryRatio = Math.min(Math.max(discoveryLevel / 100, 0), 1);
+    const explorationCount = Math.round(safeLimit * discoveryRatio);
+    const familiarityCount = safeLimit - explorationCount;
+
+    const familiarPool = rankedRecommendations.filter((item) => item.score > 0);
+    const discoveryPool = rankedRecommendations.filter((item) => item.score === 0);
+
+    const selected = [
+      ...shuffle(familiarPool).slice(0, familiarityCount),
+      ...shuffle(discoveryPool).slice(0, explorationCount),
+    ];
+
+    if (selected.length < safeLimit) {
+      const used = new Set(selected.map((item) => `${item.title}-${item.artist}`));
+      const fallback = shuffle(rankedRecommendations).filter((item) => !used.has(`${item.title}-${item.artist}`));
+      return [...selected, ...fallback].slice(0, safeLimit);
+    }
+
+    return selected.slice(0, safeLimit);
+  }, [discoveryLevel, rankedRecommendations]);
+
+  const tasteSummary = useMemo(() => {
+    if (topTasteArtists.length) {
+      return `Based on your taste: ${topTasteArtists.join(', ')} • ${discoveryLevel}% discovery mode`;
+    }
+    return 'Showing a fresh random mix while we learn your taste.';
+  }, [discoveryLevel, topTasteArtists]);
 
   const cards = useMemo(
     () =>
@@ -168,10 +185,25 @@ export default function Recommendations({ username }) {
               <p className="mt-2 text-gray-300">
                 {tasteSummary || 'Building picks from your listening taste...'}
               </p>
+              <div className="mt-4 max-w-md">
+                <div className="mb-2 flex items-center justify-between text-xs font-medium uppercase tracking-wide text-gray-400">
+                  <span>Familiar picks</span>
+                  <span>{discoveryLevel}% Discovery</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={discoveryLevel}
+                  onChange={(event) => setDiscoveryLevel(Number(event.target.value))}
+                  className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-700 accent-purple-400"
+                />
+              </div>
             </div>
             <button
               type="button"
-              onClick={generateForTaste}
+              onClick={loadTasteProfile}
               className="inline-flex items-center gap-2 rounded-md border border-purple-500 bg-purple-500/10 px-4 py-2 text-sm font-medium text-purple-200 transition hover:bg-purple-500/20"
             >
               <RefreshCw className="h-4 w-4" />
