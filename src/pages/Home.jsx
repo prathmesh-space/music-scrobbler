@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getUserInfo, getRecentTracks } from '../services/lastfm';
-import { Loader2, Music2, Clock, Users, Search, ListFilter } from 'lucide-react';
+import {
+  Loader2,
+  Music2,
+  Clock,
+  Users,
+  Search,
+  ListFilter,
+  ArrowDownAZ,
+  ArrowUpZA,
+  Clock3,
+} from 'lucide-react';
 import {
   buildSearchQuery,
   getSpotifySearchUrl,
@@ -15,6 +25,7 @@ const Home = ({ username }) => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [showNowPlayingOnly, setShowNowPlayingOnly] = useState(false);
+  const [sortBy, setSortBy] = useState('recent');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,10 +55,27 @@ const Home = ({ username }) => {
 
   const userImage = getLastFmImageUrl(userInfo?.image);
 
+  const tracksSummary = useMemo(() => {
+    const nowPlayingCount = recentTracks.filter(
+      (track) => track['@attr']?.nowplaying === 'true',
+    ).length;
+
+    const uniqueArtistsCount = new Set(
+      recentTracks
+        .map((track) => track.artist?.['#text'] || track.artist?.name || '')
+        .filter(Boolean),
+    ).size;
+
+    return {
+      nowPlaying: nowPlayingCount,
+      uniqueArtists: uniqueArtistsCount,
+    };
+  }, [recentTracks]);
+
   const filteredTracks = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    return recentTracks.filter((track) => {
+    const visibleTracks = recentTracks.filter((track) => {
       const isNowPlaying = track['@attr']?.nowplaying === 'true';
       if (showNowPlayingOnly && !isNowPlaying) {
         return false;
@@ -65,7 +93,25 @@ const Home = ({ username }) => {
         .toLowerCase()
         .includes(normalizedSearch);
     });
-  }, [recentTracks, searchTerm, showNowPlayingOnly]);
+
+    return [...visibleTracks].sort((trackA, trackB) => {
+      if (sortBy === 'track-asc') {
+        return (trackA.name || '').localeCompare(trackB.name || '', undefined, {
+          sensitivity: 'base',
+        });
+      }
+
+      if (sortBy === 'track-desc') {
+        return (trackB.name || '').localeCompare(trackA.name || '', undefined, {
+          sensitivity: 'base',
+        });
+      }
+
+      const timestampA = Number(trackA.date?.uts || 0);
+      const timestampB = Number(trackB.date?.uts || 0);
+      return timestampB - timestampA;
+    });
+  }, [recentTracks, searchTerm, showNowPlayingOnly, sortBy]);
 
   if (loading) {
     return (
@@ -140,7 +186,32 @@ const Home = ({ username }) => {
                 <ListFilter className="w-4 h-4" />
                 Now Playing only
               </button>
+
+              <label className="inline-flex items-center gap-2 rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-gray-200">
+                {sortBy === 'recent' ? (
+                  <Clock3 className="w-4 h-4 text-purple-300" />
+                ) : sortBy === 'track-asc' ? (
+                  <ArrowDownAZ className="w-4 h-4 text-purple-300" />
+                ) : (
+                  <ArrowUpZA className="w-4 h-4 text-purple-300" />
+                )}
+                <select
+                  value={sortBy}
+                  onChange={(event) => setSortBy(event.target.value)}
+                  className="bg-transparent text-gray-100 focus:outline-none"
+                >
+                  <option value="recent" className="text-gray-900">Most recent</option>
+                  <option value="track-asc" className="text-gray-900">Track name (A-Z)</option>
+                  <option value="track-desc" className="text-gray-900">Track name (Z-A)</option>
+                </select>
+              </label>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+            <MiniStat label="Visible Tracks" value={filteredTracks.length} />
+            <MiniStat label="Now Playing" value={tracksSummary.nowPlaying} />
+            <MiniStat label="Unique Artists" value={tracksSummary.uniqueArtists} />
           </div>
 
           {error && (
@@ -257,6 +328,13 @@ const Stat = ({ icon, label, value }) => {
     </div>
   );
 };
+
+const MiniStat = ({ label, value }) => (
+  <div className="rounded-lg border border-gray-700 bg-gray-700/40 px-4 py-3">
+    <p className="text-xs uppercase tracking-wide text-gray-400">{label}</p>
+    <p className="text-lg font-semibold text-gray-100">{value}</p>
+  </div>
+);
 
 const linkVariantClasses = {
   youtube: 'bg-red-500/20 text-red-300 hover:bg-red-500/30',
