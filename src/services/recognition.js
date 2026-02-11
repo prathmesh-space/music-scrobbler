@@ -4,8 +4,11 @@ const ACR_ACCESS_KEY = import.meta.env.VITE_ACR_ACCESS_KEY;
 const ACR_ACCESS_SECRET = import.meta.env.VITE_ACR_ACCESS_SECRET;
 const ACR_HOST = import.meta.env.VITE_ACR_HOST;
 const ACR_PROXY_URL = import.meta.env.VITE_ACR_PROXY_URL;
+const IS_DEV = import.meta.env.DEV;
 
 const encoder = new TextEncoder();
+
+const shouldUseViteProxyForDirectCalls = () => Boolean(IS_DEV && !ACR_PROXY_URL && ACR_HOST);
 
 const toBase64 = (bytes) => {
   let binary = '';
@@ -16,7 +19,11 @@ const toBase64 = (bytes) => {
 };
 
 const hmacSha1Base64 = async (message, secret) => {
-  const key = await crypto.subtle.importKey(
+  if (!globalThis.crypto?.subtle) {
+    throw new Error('This browser does not support Web Crypto API for ACR signing.');
+  }
+
+  const key = await globalThis.crypto.subtle.importKey(
     'raw',
     encoder.encode(secret),
     { name: 'HMAC', hash: 'SHA-1' },
@@ -24,7 +31,7 @@ const hmacSha1Base64 = async (message, secret) => {
     ['sign']
   );
 
-  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(message));
+  const signature = await globalThis.crypto.subtle.sign('HMAC', key, encoder.encode(message));
   return toBase64(new Uint8Array(signature));
 };
 
@@ -50,6 +57,10 @@ const validateDirectConfig = () => {
 };
 
 const buildIdentifyUrl = () => {
+  if (shouldUseViteProxyForDirectCalls()) {
+    return '/acr-proxy/v1/identify';
+  }
+
   const normalizedHost = ACR_HOST.replace(/^https?:\/\//, '').replace(/\/$/, '');
   return `https://${normalizedHost}/v1/identify`;
 };
@@ -63,7 +74,7 @@ const parseAxiosError = (error) => {
   }
 
   if (error?.response?.status === 0 || error?.message === 'Network Error') {
-    return 'Network error while contacting recognition service. If you are calling ACRCloud directly from the browser, configure a backend proxy and set VITE_ACR_PROXY_URL.';
+    return 'Network error while contacting recognition service. In development, run `npm run dev` to use the built-in /acr-proxy, or configure VITE_ACR_PROXY_URL for your own backend proxy.';
   }
 
   return error?.message || 'Unable to identify song from audio sample.';

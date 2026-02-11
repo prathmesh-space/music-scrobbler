@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2, Mic, Music2, Square, Upload } from 'lucide-react';
 import { recognizeSong } from '../services/recognition';
 
-const MIN_RECORDING_SECONDS = 3;
+const MIN_RECORDING_SECONDS = 6;
 
 const formatArtists = (artists = []) => artists.map((artist) => artist.name).filter(Boolean).join(', ');
 
@@ -80,6 +80,15 @@ const convertBlobToWavFile = async (blob) => {
     return new File([wavBlob], 'recording.wav', { type: 'audio/wav' });
   } finally {
     await audioContext.close();
+  }
+};
+
+
+const normalizeAudioForRecognition = async (file) => {
+  try {
+    return await convertBlobToWavFile(file);
+  } catch {
+    return file;
   }
 };
 
@@ -180,7 +189,7 @@ const Recognition = () => {
         } catch {
           const fallbackFile = new File([recordedBlob], 'recording.webm', { type: recordedBlob.type || 'audio/webm' });
           setSelectedFile(fallbackFile);
-          setError('Saved recording in browser format. If recognition fails, try recording a clearer 5-10 second clip.');
+          setError('Saved recording in browser format. If recognition fails, upload a standard audio file (mp3/wav/m4a) or record a longer clip.')
         }
       };
 
@@ -209,7 +218,12 @@ const Recognition = () => {
     setError('');
 
     try {
-      const response = await recognizeSong(selectedFile);
+      const preparedFile = await normalizeAudioForRecognition(selectedFile);
+      if (preparedFile !== selectedFile) {
+        setSelectedFile(preparedFile);
+      }
+
+      const response = await recognizeSong(preparedFile);
       if (!response.result) {
         setError('No matching track found in ACRCloud results.');
         setResult(null);
@@ -219,7 +233,7 @@ const Recognition = () => {
     } catch (identifyError) {
       const message = identifyError.message || 'Failed to identify song.';
       if (message.toLowerCase().includes('fingerprint')) {
-        setError('Could not generate fingerprint. Try a louder 5-10 second recording and avoid background noise.');
+        setError('Could not generate fingerprint. Try a cleaner 8-15 second clip, avoid silence at the start, and keep music volume clearly audible.')
       } else {
         setError(message);
       }
@@ -237,7 +251,7 @@ const Recognition = () => {
             <Music2 className="h-7 w-7 text-purple-400" />
             Song recognition
           </h1>
-          <p className="text-gray-300">Upload a short audio clip and we&apos;ll identify the song with ACRCloud.</p>
+          <p className="text-gray-300">Upload or record a clear 8-15 second audio clip and we&apos;ll identify the song with ACRCloud.</p>
         </div>
 
         <form onSubmit={onIdentify} className="rounded-xl border border-gray-700 bg-gray-800 p-6">
@@ -286,6 +300,8 @@ const Recognition = () => {
           </div>
 
           {fileInfo && <p className="text-sm text-gray-400">Selected: {fileInfo}</p>}
+
+          <p className="mt-2 text-xs text-gray-500">Tip: recognition works best with music-only clips, no talking, and at least {MIN_RECORDING_SECONDS} seconds.</p>
 
           {error && <p className="mt-4 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>}
         </form>
