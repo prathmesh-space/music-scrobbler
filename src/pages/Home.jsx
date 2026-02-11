@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { getUserInfo, getRecentTracks } from '../services/lastfm';
-import { Loader2, Music2, Clock, Users } from 'lucide-react';
+import { Loader2, Music2, Clock, Users, Search, ListFilter } from 'lucide-react';
 import {
   buildSearchQuery,
   getSpotifySearchUrl,
@@ -12,28 +12,60 @@ const Home = ({ username }) => {
   const [userInfo, setUserInfo] = useState(null);
   const [recentTracks, setRecentTracks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showNowPlayingOnly, setShowNowPlayingOnly] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
+      setError('');
+
       try {
         const [user, tracks] = await Promise.all([
           getUserInfo(username),
-          getRecentTracks(username, 10),
+          getRecentTracks(username, 30),
         ]);
 
         setUserInfo(user);
         setRecentTracks(tracks?.track || []);
-      } catch (error) {
-        console.error('Error fetching data:', error);
+      } catch (fetchError) {
+        console.error('Error fetching data:', fetchError);
+        setError('Could not load your listening data right now. Please try again in a moment.');
       } finally {
         setLoading(false);
       }
     };
 
-    if (username) fetchData();
+    if (username) {
+      fetchData();
+    }
   }, [username]);
 
   const userImage = getLastFmImageUrl(userInfo?.image);
+
+  const filteredTracks = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    return recentTracks.filter((track) => {
+      const isNowPlaying = track['@attr']?.nowplaying === 'true';
+      if (showNowPlayingOnly && !isNowPlaying) {
+        return false;
+      }
+
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      const artistName = track.artist?.['#text'] || track.artist?.name || '';
+      const albumName = track.album?.['#text'] || '';
+
+      return [track.name, artistName, albumName]
+        .join(' ')
+        .toLowerCase()
+        .includes(normalizedSearch);
+    });
+  }, [recentTracks, searchTerm, showNowPlayingOnly]);
 
   if (loading) {
     return (
@@ -46,7 +78,6 @@ const Home = ({ username }) => {
   return (
     <div className="min-h-screen bg-gray-900 py-8 px-4">
       <div className="max-w-6xl mx-auto">
-
         {/* User Info */}
         <div className="bg-gray-800 rounded-lg p-6 mb-8 border border-gray-700">
           <div className="flex items-center space-x-4 mb-6">
@@ -82,16 +113,52 @@ const Home = ({ username }) => {
 
         {/* Recent Tracks */}
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-          <h2 className="text-2xl font-bold text-white mb-6">Recent Tracks</h2>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <h2 className="text-2xl font-bold text-white">Recent Tracks</h2>
 
-          {recentTracks.length === 0 && (
+            <div className="flex flex-col sm:flex-row gap-3 md:max-w-xl w-full">
+              <label className="relative flex-1">
+                <Search className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Filter by track, artist, or album"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  className="w-full bg-gray-700 text-gray-100 rounded-md pl-9 pr-3 py-2 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </label>
+
+              <button
+                type="button"
+                onClick={() => setShowNowPlayingOnly((current) => !current)}
+                className={`inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 border transition ${
+                  showNowPlayingOnly
+                    ? 'bg-green-600/20 text-green-300 border-green-500/50'
+                    : 'bg-gray-700 text-gray-200 border-gray-600 hover:bg-gray-600'
+                }`}
+              >
+                <ListFilter className="w-4 h-4" />
+                Now Playing only
+              </button>
+            </div>
+          </div>
+
+          {error && (
+            <p className="text-red-300 bg-red-900/30 border border-red-700 rounded-lg p-3 mb-4">
+              {error}
+            </p>
+          )}
+
+          {!error && filteredTracks.length === 0 && (
             <p className="text-gray-400 text-center py-8">
-              No recent tracks found
+              {recentTracks.length === 0
+                ? 'No recent tracks found.'
+                : 'No tracks match the selected filters.'}
             </p>
           )}
 
           <div className="space-y-4">
-            {recentTracks.map((track, index) => {
+            {filteredTracks.map((track) => {
               const artistName = track.artist?.['#text'] || track.artist?.name;
               const albumName = track.album?.['#text'];
               const trackImage = getLastFmImageUrl(track.image);
@@ -115,9 +182,11 @@ const Home = ({ username }) => {
                   })
                 : null;
 
+              const trackKey = `${track.name}-${artistName}-${track.date?.uts || track.url}`;
+
               return (
                 <div
-                  key={index}
+                  key={trackKey}
                   className="flex items-center space-x-4 bg-gray-700 rounded-lg p-4 hover:bg-gray-600 transition"
                 >
                   <img
@@ -126,31 +195,31 @@ const Home = ({ username }) => {
                     className="w-16 h-16 rounded"
                   />
 
-                  <div className="flex-1">
-                    <p className="text-white font-semibold">{track.name}</p>
-                    <p className="text-gray-400">{artistName}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-semibold truncate">{track.name}</p>
+                    <p className="text-gray-400 truncate">{artistName}</p>
                     {albumName && (
-                      <p className="text-gray-500 text-sm">{albumName}</p>
+                      <p className="text-gray-500 text-sm truncate">{albumName}</p>
                     )}
 
                     {/* Links */}
                     <div className="mt-2 flex flex-wrap gap-2 text-xs">
                       {trackQuery && (
                         <>
-                          <MusicLink label="Track • YouTube" color="red" url={getYouTubeSearchUrl(trackQuery)} />
-                          <MusicLink label="Track • Spotify" color="green" url={getSpotifySearchUrl(trackQuery)} />
+                          <MusicLink label="Track • YouTube" variant="youtube" url={getYouTubeSearchUrl(trackQuery)} />
+                          <MusicLink label="Track • Spotify" variant="spotify" url={getSpotifySearchUrl(trackQuery)} />
                         </>
                       )}
                       {artistQuery && (
                         <>
-                          <MusicLink label="Artist • YouTube" color="red" light url={getYouTubeSearchUrl(artistQuery)} />
-                          <MusicLink label="Artist • Spotify" color="green" light url={getSpotifySearchUrl(artistQuery)} />
+                          <MusicLink label="Artist • YouTube" variant="youtubeMuted" url={getYouTubeSearchUrl(artistQuery)} />
+                          <MusicLink label="Artist • Spotify" variant="spotifyMuted" url={getSpotifySearchUrl(artistQuery)} />
                         </>
                       )}
                       {albumQuery && (
                         <>
-                          <MusicLink label="Album • YouTube" color="red" light url={getYouTubeSearchUrl(albumQuery)} />
-                          <MusicLink label="Album • Spotify" color="green" light url={getSpotifySearchUrl(albumQuery)} />
+                          <MusicLink label="Album • YouTube" variant="youtubeMuted" url={getYouTubeSearchUrl(albumQuery)} />
+                          <MusicLink label="Album • Spotify" variant="spotifyMuted" url={getSpotifySearchUrl(albumQuery)} />
                         </>
                       )}
                     </div>
@@ -189,16 +258,19 @@ const Stat = ({ icon, label, value }) => {
   );
 };
 
-const MusicLink = ({ label, url, color, light }) => (
+const linkVariantClasses = {
+  youtube: 'bg-red-500/20 text-red-300 hover:bg-red-500/30',
+  spotify: 'bg-green-500/20 text-green-300 hover:bg-green-500/30',
+  youtubeMuted: 'bg-red-500/10 text-red-300 hover:bg-red-500/20',
+  spotifyMuted: 'bg-green-500/10 text-green-300 hover:bg-green-500/20',
+};
+
+const MusicLink = ({ label, url, variant }) => (
   <a
     href={url}
     target="_blank"
     rel="noreferrer"
-    className={`px-2 py-1 rounded-full 
-      bg-${color}-500/${light ? '10' : '20'} 
-      text-${color}-300 
-      hover:bg-${color}-500/${light ? '20' : '30'} 
-      transition`}
+    className={`px-2 py-1 rounded-full transition ${linkVariantClasses[variant] || linkVariantClasses.youtubeMuted}`}
   >
     {label}
   </a>
