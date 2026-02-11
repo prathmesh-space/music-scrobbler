@@ -71,8 +71,6 @@ const scoreRecommendation = (item, taste) => {
   return score;
 };
 
-<<<<<<< ours
-=======
 const hashString = (input) => {
   let hash = 0;
   for (let i = 0; i < input.length; i += 1) {
@@ -89,17 +87,13 @@ const sortBySeed = (items, seed) =>
     return aHash - bHash;
   });
 
->>>>>>> theirs
 export default function Recommendations({ username }) {
   const [rankedRecommendations, setRankedRecommendations] = useState([]);
   const [topTasteArtists, setTopTasteArtists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [discoveryLevel, setDiscoveryLevel] = useState(45);
-<<<<<<< ours
-=======
   const [blendSeed, setBlendSeed] = useState(0);
->>>>>>> theirs
 
   const loadTasteProfile = useCallback(async () => {
     try {
@@ -124,13 +118,6 @@ export default function Recommendations({ username }) {
 
       setRankedRecommendations(ranked);
       setTopTasteArtists(topArtists.slice(0, 3).map((artist) => artist.name));
-<<<<<<< ours
-    } catch (err) {
-      console.error('Failed to generate personalized recommendations:', err);
-      setError('Could not personalize recommendations right now. Showing random picks instead.');
-      setRankedRecommendations(shuffle(RECOMMENDATION_LIBRARY).map((item) => ({ ...item, score: 0 })));
-      setTopTasteArtists([]);
-=======
       setBlendSeed((currentSeed) => currentSeed + 1);
     } catch (err) {
       console.error('Failed to generate personalized recommendations:', err);
@@ -138,11 +125,14 @@ export default function Recommendations({ username }) {
       setRankedRecommendations(RECOMMENDATION_LIBRARY.map((item) => ({ ...item, score: 0 })));
       setTopTasteArtists([]);
       setBlendSeed((currentSeed) => currentSeed + 1);
->>>>>>> theirs
     } finally {
       setLoading(false);
     }
   }, [username]);
+
+  const remixRecommendations = useCallback(() => {
+    setBlendSeed((currentSeed) => currentSeed + 1);
+  }, []);
 
   useEffect(() => {
     loadTasteProfile();
@@ -154,14 +144,6 @@ export default function Recommendations({ username }) {
     const explorationCount = Math.round(safeLimit * discoveryRatio);
     const familiarityCount = safeLimit - explorationCount;
 
-<<<<<<< ours
-    const familiarPool = rankedRecommendations.filter((item) => item.score > 0);
-    const discoveryPool = rankedRecommendations.filter((item) => item.score === 0);
-
-    const selected = [
-      ...shuffle(familiarPool).slice(0, familiarityCount),
-      ...shuffle(discoveryPool).slice(0, explorationCount),
-=======
     const familiarPool = sortBySeed(
       rankedRecommendations.filter((item) => item.score > 0),
       `familiar-${blendSeed}-${discoveryLevel}`,
@@ -174,26 +156,17 @@ export default function Recommendations({ username }) {
     const selected = [
       ...familiarPool.slice(0, familiarityCount),
       ...discoveryPool.slice(0, explorationCount),
->>>>>>> theirs
     ];
 
     if (selected.length < safeLimit) {
       const used = new Set(selected.map((item) => `${item.title}-${item.artist}`));
-<<<<<<< ours
-      const fallback = shuffle(rankedRecommendations).filter((item) => !used.has(`${item.title}-${item.artist}`));
-=======
       const fallback = sortBySeed(rankedRecommendations, `fallback-${blendSeed}-${discoveryLevel}`)
         .filter((item) => !used.has(`${item.title}-${item.artist}`));
->>>>>>> theirs
       return [...selected, ...fallback].slice(0, safeLimit);
     }
 
     return selected.slice(0, safeLimit);
-<<<<<<< ours
-  }, [discoveryLevel, rankedRecommendations]);
-=======
   }, [blendSeed, discoveryLevel, rankedRecommendations]);
->>>>>>> theirs
 
   const tasteSummary = useMemo(() => {
     if (topTasteArtists.length) {
@@ -245,22 +218,29 @@ export default function Recommendations({ username }) {
                   step="5"
                   value={discoveryLevel}
                   onChange={(event) => setDiscoveryLevel(Number(event.target.value))}
-<<<<<<< ours
-=======
                   aria-label="Discovery level"
->>>>>>> theirs
                   className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-gray-700 accent-purple-400"
                 />
               </div>
             </div>
-            <button
-              type="button"
-              onClick={loadTasteProfile}
-              className="inline-flex items-center gap-2 rounded-md border border-purple-500 bg-purple-500/10 px-4 py-2 text-sm font-medium text-purple-200 transition hover:bg-purple-500/20"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Refresh picks
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={loadTasteProfile}
+                className="inline-flex items-center gap-2 rounded-md border border-purple-500 bg-purple-500/10 px-4 py-2 text-sm font-medium text-purple-200 transition hover:bg-purple-500/20"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Refresh taste profile
+              </button>
+              <button
+                type="button"
+                onClick={remixRecommendations}
+                className="inline-flex items-center gap-2 rounded-md border border-gray-600 bg-gray-700/50 px-4 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-700"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Remix picks
+              </button>
+            </div>
           </div>
         </section>
 
