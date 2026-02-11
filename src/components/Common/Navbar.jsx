@@ -10,6 +10,19 @@ const themeOptions = [
   { value: 'system', label: 'System' },
 ];
 
+const navigationItems = [
+  { path: '/', label: 'Home', mobileLabel: 'Home' },
+  { path: '/charts', label: 'Charts', mobileLabel: 'Charts' },
+  { path: '/statistics', label: 'Statistics', mobileLabel: 'Stats' },
+  { path: '/collage', label: 'Collage', mobileLabel: 'Collage' },
+  { path: '/friends', label: 'Friends', mobileLabel: 'Friends' },
+  { path: '/profile', label: 'Profile', mobileLabel: 'Profile' },
+  { path: '/recommendations', label: 'Recommendations', mobileLabel: 'Recs' },
+  { path: '/recognition', label: 'Recognition', mobileLabel: 'Recognize' },
+  { path: '/goals', label: 'Goals', mobileLabel: 'Goals' },
+  { path: '/discovery', label: 'Discovery', mobileLabel: 'Discover' },
+];
+
 const navLinkClasses = (isLight) => ({ isActive }) =>
   `rounded-md px-3 py-2 text-sm font-medium transition ${
     isActive
@@ -87,18 +100,16 @@ const Navbar = ({
           </Link>
 
           <nav className="hidden space-x-2 lg:flex">
-            {['/', '/charts', '/statistics', '/collage', '/friends', '/profile', '/recommendations', '/recognition'].map(
-              (path, i) => (
-                <NavLink
-                  key={path}
-                  to={path}
-                  end={i === 0}
-                  className={navLinkClasses(isLight)}
-                >
-                  {['Home', 'Charts', 'Statistics', 'Collage', 'Friends', 'Profile', 'Recommendations', 'Recognition'][i]}
-                </NavLink>
-              )
-            )}
+            {navigationItems.map((item, i) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={i === 0}
+                className={navLinkClasses(isLight)}
+              >
+                {item.label}
+              </NavLink>
+            ))}
           </nav>
         </div>
 
@@ -173,19 +184,17 @@ const Navbar = ({
         className={`border-t px-4 py-3 lg:hidden ${container} ${mobileMenuOpen ? 'block' : 'hidden'}`}
       >
         <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto pb-1">
-          {['/', '/charts', '/statistics', '/collage', '/friends', '/profile', '/recommendations', '/recognition'].map(
-            (path, i) => (
-              <NavLink
-                key={path}
-                to={path}
-                end={i === 0}
-                className={navLinkClasses(isLight)}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {['Home', 'Charts', 'Stats', 'Collage', 'Friends', 'Profile', 'Recs', 'Recognize'][i]}
-              </NavLink>
-            )
-          )}
+          {navigationItems.map((item, i) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={i === 0}
+              className={navLinkClasses(isLight)}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {item.mobileLabel}
+            </NavLink>
+          ))}
         </div>
       </nav>
     </header>

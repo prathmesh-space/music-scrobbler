@@ -11,6 +11,8 @@ import Friends from './pages/Friends';
 import Profile from './pages/Profile';
 import Recommendations from './pages/Recommendations';
 import Recognition from './pages/Recognition';
+import ListeningGoals from './pages/ListeningGoals';
+import DiscoveryLab from './pages/DiscoveryLab';
 
 import { Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -85,6 +87,8 @@ function App() {
               <Route path="/profile" element={<Profile username={username} />} />
               <Route path="/recommendations" element={<Recommendations username={username} />} />
               <Route path="/recognition" element={<Recognition />} />
+              <Route path="/goals" element={<ListeningGoals username={username} />} />
+              <Route path="/discovery" element={<DiscoveryLab username={username} />} />
               <Route path="*" element={<Navigate to="/" />} />
             </>
           ) : (
