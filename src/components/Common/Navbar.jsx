@@ -1,8 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
-import { Check, LogOut, Menu, Settings } from 'lucide-react';
-
-/* -------------------- helpers -------------------- */
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { Check, Command, LogOut, Menu, Search, Settings } from 'lucide-react';
 
 const themeOptions = [
   { value: 'dark', label: 'Dark' },
@@ -11,16 +9,16 @@ const themeOptions = [
 ];
 
 const navigationItems = [
-  { path: '/', label: 'Home', mobileLabel: 'Home' },
-  { path: '/charts', label: 'Charts', mobileLabel: 'Charts' },
-  { path: '/statistics', label: 'Statistics', mobileLabel: 'Stats' },
-  { path: '/collage', label: 'Collage', mobileLabel: 'Collage' },
-  { path: '/friends', label: 'Friends', mobileLabel: 'Friends' },
-  { path: '/profile', label: 'Profile', mobileLabel: 'Profile' },
-  { path: '/recommendations', label: 'Recommendations', mobileLabel: 'Recs' },
-  { path: '/recognition', label: 'Recognition', mobileLabel: 'Recognize' },
-  { path: '/goals', label: 'Goals', mobileLabel: 'Goals' },
-  { path: '/discovery', label: 'Discovery', mobileLabel: 'Discover' },
+  { path: '/', label: 'Home', mobileLabel: 'Home', description: 'Recent listening activity and now playing.' },
+  { path: '/charts', label: 'Charts', mobileLabel: 'Charts', description: 'Your top artists, albums, and tracks.' },
+  { path: '/statistics', label: 'Statistics', mobileLabel: 'Stats', description: 'Listening trends and activity over time.' },
+  { path: '/collage', label: 'Collage', mobileLabel: 'Collage', description: 'Generate and export album or artist collages.' },
+  { path: '/friends', label: 'Friends', mobileLabel: 'Friends', description: 'Compare your listening with Last.fm friends.' },
+  { path: '/profile', label: 'Profile', mobileLabel: 'Profile', description: 'Profile insights, badges, and account view.' },
+  { path: '/recommendations', label: 'Recommendations', mobileLabel: 'Recs', description: 'Suggested songs and artists based on your taste.' },
+  { path: '/recognition', label: 'Recognition', mobileLabel: 'Recognize', description: 'Identify tracks from audio snippets.' },
+  { path: '/goals', label: 'Goals', mobileLabel: 'Goals', description: 'Track listening goals and streaks.' },
+  { path: '/discovery', label: 'Discovery', mobileLabel: 'Discover', description: 'Explore related artists and deep cuts.' },
 ];
 
 const navLinkClasses = (isLight) => ({ isActive }) =>
@@ -32,22 +30,30 @@ const navLinkClasses = (isLight) => ({ isActive }) =>
         : 'text-gray-300 hover:text-white hover:bg-gray-700'
   }`;
 
-/* -------------------- component -------------------- */
+const RECENT_ROUTES_KEY = 'music-scrobbler-recent-routes';
 
-const Navbar = ({
-  username,
-  onLogout,
-  theme = 'dark',
-  activeTheme = 'dark',
-  onThemeChange,
-}) => {
+const getStoredRecentRoutes = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(RECENT_ROUTES_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const Navbar = ({ username, onLogout, theme = 'dark', activeTheme = 'dark', onThemeChange }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [query, setQuery] = useState('');
+
   const menuRef = useRef(null);
+  const commandInputRef = useRef(null);
+
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const isLight = activeTheme === 'light';
-
-  /* -------------------- styles -------------------- */
 
   const container = isLight
     ? 'border-gray-200 bg-white/90 backdrop-blur'
@@ -60,9 +66,7 @@ const Navbar = ({
     ? 'border-gray-300 text-gray-700 hover:bg-gray-100'
     : 'border-purple-500 text-purple-200 hover:bg-purple-500 hover:text-white';
 
-  const menuPanel = isLight
-    ? 'border-gray-200 bg-white'
-    : 'border-gray-700 bg-gray-800';
+  const menuPanel = isLight ? 'border-gray-200 bg-white' : 'border-gray-700 bg-gray-800';
 
   const menuItem = (selected) =>
     `flex w-full items-center justify-between rounded-md px-3 py-2 text-sm transition ${
@@ -75,8 +79,6 @@ const Navbar = ({
           : 'text-gray-300 hover:bg-gray-700 hover:text-white'
     }`;
 
-  /* -------------------- effects -------------------- */
-
   useEffect(() => {
     const closeOnOutsideClick = (e) => {
       if (!menuRef.current?.contains(e.target)) {
@@ -88,116 +90,252 @@ const Navbar = ({
     return () => document.removeEventListener('mousedown', closeOnOutsideClick);
   }, []);
 
-  /* -------------------- render -------------------- */
+  useEffect(() => {
+    const onKeydown = (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setCommandOpen((previous) => !previous);
+      }
+
+      if (event.key === 'Escape') {
+        setCommandOpen(false);
+        setQuery('');
+      }
+    };
+
+    window.addEventListener('keydown', onKeydown);
+    return () => window.removeEventListener('keydown', onKeydown);
+  }, []);
+
+  useEffect(() => {
+    const matchedRoute = navigationItems.find((item) => item.path === location.pathname);
+    if (!matchedRoute) return;
+
+    const previous = getStoredRecentRoutes();
+    const next = [matchedRoute.path, ...previous.filter((path) => path !== matchedRoute.path)].slice(0, 4);
+    localStorage.setItem(RECENT_ROUTES_KEY, JSON.stringify(next));
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (commandOpen) {
+      requestAnimationFrame(() => {
+        commandInputRef.current?.focus();
+      });
+    }
+  }, [commandOpen]);
+
+  const quickSuggestions = getStoredRecentRoutes()
+    .map((path) => navigationItems.find((item) => item.path === path))
+    .filter(Boolean);
+
+  const filteredItems = useMemo(() => {
+    const cleanQuery = query.trim().toLowerCase();
+
+    if (!cleanQuery) {
+      return navigationItems;
+    }
+
+    return navigationItems.filter((item) =>
+      [item.label, item.description, item.mobileLabel].some((value) =>
+        value.toLowerCase().includes(cleanQuery),
+      ),
+    );
+  }, [query]);
+
+  const closeCommand = () => {
+    setCommandOpen(false);
+    setQuery('');
+  };
+
+  const goToRoute = (path) => {
+    navigate(path);
+    closeCommand();
+    setMobileMenuOpen(false);
+  };
 
   return (
-    <header className={`sticky top-0 z-40 border-b transition-colors ${container}`}>
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-        {/* Logo + desktop nav */}
-        <div className="flex items-center space-x-6">
-          <Link to="/" className={`text-lg font-semibold ${userName}`}>
-            Music Scrobbler
-          </Link>
+    <>
+      <header className={`sticky top-0 z-40 border-b transition-colors ${container}`}>
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+          <div className="flex items-center space-x-6">
+            <Link to="/" className={`text-lg font-semibold ${userName}`}>
+              Music Scrobbler
+            </Link>
 
-          <nav className="hidden space-x-2 lg:flex">
+            <nav className="hidden space-x-2 lg:flex">
+              {navigationItems.map((item, i) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  end={i === 0}
+                  className={navLinkClasses(isLight)}
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition lg:hidden ${buttonBase}`}
+            >
+              <Menu className="h-4 w-4" />
+              Menu
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCommandOpen(true)}
+              className={`hidden items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition md:inline-flex ${buttonBase}`}
+            >
+              <Search className="h-4 w-4" />
+              Quick jump
+              <span className={`rounded border px-1.5 py-0.5 text-xs ${isLight ? 'border-gray-300' : 'border-gray-500 text-gray-300'}`}>
+                <Command className="h-3 w-3 inline" />K
+              </span>
+            </button>
+
+            <span className={`hidden text-sm sm:block ${userText}`}>
+              Signed in as <span className={`font-semibold ${userName}`}>{username}</span>
+            </span>
+
+            <div className="relative" ref={menuRef}>
+              <button
+                type="button"
+                onClick={() => setSettingsOpen((v) => !v)}
+                className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition ${buttonBase}`}
+              >
+                <Settings className="h-4 w-4" />
+                Settings
+              </button>
+
+              {settingsOpen && (
+                <div
+                  className={`absolute right-0 top-12 z-50 w-44 rounded-md border p-2 shadow-lg ${menuPanel}`}
+                >
+                  <p className={`px-2 pb-1 text-xs font-semibold uppercase ${userText}`}>
+                    Theme
+                  </p>
+
+                  {themeOptions.map(({ value, label }) => {
+                    const selected = value === theme;
+
+                    return (
+                      <button
+                        key={value}
+                        onClick={() => {
+                          onThemeChange?.(value);
+                          setSettingsOpen(false);
+                        }}
+                        className={menuItem(selected)}
+                      >
+                        {label}
+                        {selected && <Check className="h-4 w-4" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={onLogout}
+              className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition ${buttonBase}`}
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </button>
+          </div>
+        </div>
+
+        <nav
+          className={`border-t px-4 py-3 lg:hidden ${container} ${mobileMenuOpen ? 'block' : 'hidden'}`}
+        >
+          <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto pb-1">
             {navigationItems.map((item, i) => (
               <NavLink
                 key={item.path}
                 to={item.path}
                 end={i === 0}
                 className={navLinkClasses(isLight)}
+                onClick={() => setMobileMenuOpen(false)}
               >
-                {item.label}
+                {item.mobileLabel}
               </NavLink>
             ))}
-          </nav>
-        </div>
-
-        {/* Right actions */}
-        <div className="flex items-center space-x-4">
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen((v) => !v)}
-            className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition lg:hidden ${buttonBase}`}
-          >
-            <Menu className="h-4 w-4" />
-            Menu
-          </button>
-
-          <span className={`hidden text-sm sm:block ${userText}`}>
-            Signed in as <span className={`font-semibold ${userName}`}>{username}</span>
-          </span>
-
-          {/* Settings */}
-          <div className="relative" ref={menuRef}>
-            <button
-              type="button"
-              onClick={() => setSettingsOpen((v) => !v)}
-              className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition ${buttonBase}`}
-            >
-              <Settings className="h-4 w-4" />
-              Settings
-            </button>
-
-            {settingsOpen && (
-              <div
-                className={`absolute right-0 top-12 z-50 w-44 rounded-md border p-2 shadow-lg ${menuPanel}`}
-              >
-                <p className={`px-2 pb-1 text-xs font-semibold uppercase ${userText}`}>
-                  Theme
-                </p>
-
-                {themeOptions.map(({ value, label }) => {
-                  const selected = value === theme;
-
-                  return (
-                    <button
-                      key={value}
-                      onClick={() => {
-                        onThemeChange?.(value);
-                        setSettingsOpen(false);
-                      }}
-                      className={menuItem(selected)}
-                    >
-                      {label}
-                      {selected && <Check className="h-4 w-4" />}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
           </div>
+        </nav>
+      </header>
 
-          {/* Logout */}
-          <button
-            onClick={onLogout}
-            className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition ${buttonBase}`}
+      {commandOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 px-4 py-20 backdrop-blur-sm" onClick={closeCommand}>
+          <div
+            className={`mx-auto w-full max-w-2xl rounded-xl border p-4 shadow-xl ${menuPanel}`}
+            onClick={(event) => event.stopPropagation()}
           >
-            <LogOut className="h-4 w-4" />
-            Logout
-          </button>
-        </div>
-      </div>
+            <div className={`mb-3 flex items-center gap-2 rounded-md border px-3 py-2 ${isLight ? 'border-gray-300 bg-white' : 'border-gray-600 bg-gray-900'}`}>
+              <Search className={`h-4 w-4 ${isLight ? 'text-gray-500' : 'text-gray-300'}`} />
+              <input
+                ref={commandInputRef}
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search pages..."
+                className={`w-full bg-transparent text-sm outline-none ${isLight ? 'text-gray-900 placeholder:text-gray-400' : 'text-gray-100 placeholder:text-gray-500'}`}
+              />
+            </div>
 
-      {/* Mobile nav */}
-      <nav
-        className={`border-t px-4 py-3 lg:hidden ${container} ${mobileMenuOpen ? 'block' : 'hidden'}`}
-      >
-        <div className="mx-auto flex max-w-6xl gap-2 overflow-x-auto pb-1">
-          {navigationItems.map((item, i) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={i === 0}
-              className={navLinkClasses(isLight)}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              {item.mobileLabel}
-            </NavLink>
-          ))}
+            {!query && quickSuggestions.length > 0 ? (
+              <div className="mb-4">
+                <p className={`mb-2 text-xs font-semibold uppercase ${userText}`}>Recent pages</p>
+                <div className="flex flex-wrap gap-2">
+                  {quickSuggestions.map((item) => (
+                    <button
+                      key={`recent-${item.path}`}
+                      type="button"
+                      onClick={() => goToRoute(item.path)}
+                      className={`rounded-full border px-3 py-1 text-xs transition ${isLight ? 'border-gray-300 text-gray-700 hover:bg-gray-100' : 'border-gray-600 text-gray-200 hover:bg-gray-700'}`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
+              {filteredItems.length === 0 ? (
+                <p className={`rounded-md border px-3 py-4 text-sm ${isLight ? 'border-gray-200 text-gray-500' : 'border-gray-700 text-gray-400'}`}>
+                  No pages found for “{query}”.
+                </p>
+              ) : (
+                filteredItems.map((item) => (
+                  <button
+                    key={item.path}
+                    type="button"
+                    onClick={() => goToRoute(item.path)}
+                    className={`w-full rounded-lg border px-4 py-3 text-left transition ${
+                      location.pathname === item.path
+                        ? isLight
+                          ? 'border-purple-200 bg-purple-50 text-purple-800'
+                          : 'border-purple-500/60 bg-purple-500/20 text-purple-100'
+                        : isLight
+                          ? 'border-gray-200 text-gray-700 hover:bg-gray-100'
+                          : 'border-gray-700 text-gray-200 hover:bg-gray-700'
+                    }`}
+                  >
+                    <p className="font-medium">{item.label}</p>
+                    <p className={`text-xs ${isLight ? 'text-gray-500' : 'text-gray-400'}`}>{item.description}</p>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
         </div>
-      </nav>
-    </header>
+      )}
+    </>
   );
 };
 

@@ -14,7 +14,7 @@ import Recognition from './pages/Recognition';
 import ListeningGoals from './pages/ListeningGoals';
 import DiscoveryLab from './pages/DiscoveryLab';
 
-import { Loader2 } from 'lucide-react';
+import { ArrowUpCircle, Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 const THEME_STORAGE_KEY = 'music-scrobbler-theme';
@@ -27,6 +27,7 @@ const resolveTheme = (theme) => (theme === 'system' ? getSystemTheme() : theme);
 function App() {
   const { isLoggedIn, username, loading, login, logout } = useAuth();
   const [theme, setTheme] = useState(() => localStorage.getItem(THEME_STORAGE_KEY) || 'dark');
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
@@ -53,6 +54,15 @@ function App() {
     document.documentElement.dataset.theme = activeTheme;
   }, [activeTheme]);
 
+  useEffect(() => {
+    const onScroll = () => {
+      setShowBackToTop(window.scrollY > 300);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   const appThemeClass = activeTheme === 'light' ? 'bg-gray-100 text-gray-900' : 'bg-gray-900 text-white';
 
   if (loading) {
@@ -69,18 +79,14 @@ function App() {
         {isLoggedIn && (
           <Navbar username={username} onLogout={logout} theme={theme} onThemeChange={setTheme} activeTheme={activeTheme} />
         )}
-        
+
         <Routes>
-          {/* Callback route (always accessible) */}
           <Route path="/callback" element={<Callback />} />
 
-          {/* Protected routes */}
           {isLoggedIn ? (
             <>
               <Route path="/" element={<Home username={username} />} />
-              <Route path="/charts" element={
-                <Charts username={username} />
-              } />
+              <Route path="/charts" element={<Charts username={username} />} />
               <Route path="/statistics" element={<Statistics username={username} />} />
               <Route path="/collage" element={<Collage username={username} />} />
               <Route path="/friends" element={<Friends username={username} />} />
@@ -98,6 +104,17 @@ function App() {
             </>
           )}
         </Routes>
+
+        {isLoggedIn && showBackToTop ? (
+          <button
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 rounded-full border border-purple-500 bg-purple-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition hover:bg-purple-500"
+          >
+            <ArrowUpCircle className="h-4 w-4" />
+            Top
+          </button>
+        ) : null}
       </div>
     </Router>
   );
