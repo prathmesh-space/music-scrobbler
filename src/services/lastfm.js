@@ -311,6 +311,30 @@ const getTopTracks = async (username, period = '7day', limit = 50, page = 1) => 
   return data.toptracks;
 };
 
+// Get similar artists for a seed artist
+const getSimilarArtists = async (artist, limit = 20) => {
+  const data = await apiRequest({
+    method: 'artist.getSimilar',
+    artist,
+    limit,
+    autocorrect: 1,
+  });
+
+  return data.similarartists;
+};
+
+// Get top tracks for an artist
+const getArtistTopTracks = async (artist, limit = 20) => {
+  const data = await apiRequest({
+    method: 'artist.getTopTracks',
+    artist,
+    limit,
+    autocorrect: 1,
+  });
+
+  return data.toptracks;
+};
+
 
 
 // Get track info
@@ -358,6 +382,8 @@ export {
   getTopArtists,
   getTopAlbums,
   getTopTracks,
+  getSimilarArtists,
+  getArtistTopTracks,
   getTrackInfo,
   getFriends,
   searchTracks,
