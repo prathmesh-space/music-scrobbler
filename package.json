@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "backend:ingest": "node backend/cli.js ingest",
+    "backend:build": "node backend/cli.js build"
   },
   "dependencies": {
     "axios": "^1.13.5",
