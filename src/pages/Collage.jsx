@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getTopAlbums, getTopArtists, getTopTracks } from '../services/lastfm';
 import { Download, Grid3x3, Loader2 } from 'lucide-react';
 import { getLastFmImageUrl } from '../utils/lastfmImage.js';
-import { getSpotifyArtistImage } from '../services/spotify';
+import { getSpotifyAlbumImage, getSpotifyArtistImage, getSpotifyTrackImage } from '../services/spotify';
 
 const collageTypes = [
   { value: 'albums', label: 'Albums' },
@@ -58,8 +58,26 @@ const Collage = ({ username }) => {
             return { ...item, imageUrl: lastFmImageUrl };
           }
 
+          const artistName = item.artist?.name || item.artist?.['#text'] || '';
+
           if (collageType === 'artists') {
             const spotifyImageUrl = await getSpotifyArtistImage(item.name || '');
+            return { ...item, imageUrl: spotifyImageUrl };
+          }
+
+          if (collageType === 'albums') {
+            const spotifyImageUrl = await getSpotifyAlbumImage({
+              albumName: item.name || '',
+              artistName,
+            });
+            return { ...item, imageUrl: spotifyImageUrl };
+          }
+
+          if (collageType === 'tracks') {
+            const spotifyImageUrl = await getSpotifyTrackImage({
+              trackName: item.name || '',
+              artistName,
+            });
             return { ...item, imageUrl: spotifyImageUrl };
           }
 

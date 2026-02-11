@@ -3,7 +3,7 @@ import axios from 'axios';
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
 const SPOTIFY_API_URL = 'https://api.spotify.com/v1';
 const TOKEN_CACHE_KEY = 'spotify_cc_token';
-const IMAGE_CACHE_PREFIX = 'spotify_artist_image:';
+const IMAGE_CACHE_PREFIX = 'spotify_image:';
 
 const clientId = import.meta.env.VITE_SPOTIFY_CLIENT_ID;
 const clientSecret = import.meta.env.VITE_SPOTIFY_CLIENT_SECRET;
@@ -58,7 +58,7 @@ const getSpotifyToken = async () => {
         Authorization: `Basic ${getEncodedCredentials()}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-    }
+    },
   );
 
   const accessToken = response.data?.access_token;
@@ -76,39 +76,42 @@ const getSpotifyToken = async () => {
   return accessToken;
 };
 
-const getImageFromStorageCache = (artistName) => {
+const getImageFromStorageCache = (cacheKey) => {
   try {
-    return localStorage.getItem(`${IMAGE_CACHE_PREFIX}${artistName.toLowerCase()}`) || '';
+    return localStorage.getItem(`${IMAGE_CACHE_PREFIX}${cacheKey}`) || '';
   } catch {
     return '';
   }
 };
 
-const setImageInStorageCache = (artistName, imageUrl) => {
+const setImageInStorageCache = (cacheKey, imageUrl) => {
   try {
-    localStorage.setItem(`${IMAGE_CACHE_PREFIX}${artistName.toLowerCase()}`, imageUrl || '');
+    localStorage.setItem(`${IMAGE_CACHE_PREFIX}${cacheKey}`, imageUrl || '');
   } catch {
     // no-op if storage is unavailable
   }
 };
 
-const getSpotifyArtistImage = async (artistName = '') => {
-  const normalizedArtist = artistName.trim();
-  if (!normalizedArtist) return '';
+const getSpotifySearchImage = async ({ query = '', type = 'artist' }) => {
+  const normalizedQuery = query.trim();
+  if (!normalizedQuery) return '';
 
-  if (memoryImageCache.has(normalizedArtist)) {
-    return memoryImageCache.get(normalizedArtist) || '';
+  const normalizedType = type === 'album' || type === 'track' ? type : 'artist';
+  const cacheKey = `${normalizedType}:${normalizedQuery.toLowerCase()}`;
+
+  if (memoryImageCache.has(cacheKey)) {
+    return memoryImageCache.get(cacheKey) || '';
   }
 
-  const storageCached = getImageFromStorageCache(normalizedArtist);
+  const storageCached = getImageFromStorageCache(cacheKey);
   if (storageCached) {
-    memoryImageCache.set(normalizedArtist, storageCached);
+    memoryImageCache.set(cacheKey, storageCached);
     return storageCached;
   }
 
   const token = await getSpotifyToken();
   if (!token) {
-    memoryImageCache.set(normalizedArtist, '');
+    memoryImageCache.set(cacheKey, '');
     return '';
   }
 
@@ -116,21 +119,49 @@ const getSpotifyArtistImage = async (artistName = '') => {
     const response = await axios.get(`${SPOTIFY_API_URL}/search`, {
       headers: { Authorization: `Bearer ${token}` },
       params: {
-        q: normalizedArtist,
-        type: 'artist',
+        q: normalizedQuery,
+        type: normalizedType,
         limit: 1,
       },
     });
 
-    const imageUrl = response.data?.artists?.items?.[0]?.images?.[0]?.url || '';
-    memoryImageCache.set(normalizedArtist, imageUrl);
-    setImageInStorageCache(normalizedArtist, imageUrl);
+    let imageUrl = '';
+
+    if (normalizedType === 'artist') {
+      imageUrl = response.data?.artists?.items?.[0]?.images?.[0]?.url || '';
+    } else if (normalizedType === 'album') {
+      imageUrl = response.data?.albums?.items?.[0]?.images?.[0]?.url || '';
+    } else {
+      imageUrl = response.data?.tracks?.items?.[0]?.album?.images?.[0]?.url || '';
+    }
+
+    memoryImageCache.set(cacheKey, imageUrl);
+    setImageInStorageCache(cacheKey, imageUrl);
     return imageUrl;
   } catch (error) {
     console.error('Spotify image lookup failed:', error?.message || error);
-    memoryImageCache.set(normalizedArtist, '');
+    memoryImageCache.set(cacheKey, '');
     return '';
   }
 };
 
-export { getSpotifyArtistImage, hasSpotifyCredentials };
+const getSpotifyArtistImage = async (artistName = '') =>
+  getSpotifySearchImage({ query: artistName, type: 'artist' });
+
+const getSpotifyAlbumImage = async ({ albumName = '', artistName = '' }) => {
+  const query = [albumName.trim(), artistName.trim()].filter(Boolean).join(' ');
+  return getSpotifySearchImage({ query, type: 'album' });
+};
+
+const getSpotifyTrackImage = async ({ trackName = '', artistName = '' }) => {
+  const query = [trackName.trim(), artistName.trim()].filter(Boolean).join(' ');
+  return getSpotifySearchImage({ query, type: 'track' });
+};
+
+export {
+  getSpotifyArtistImage,
+  getSpotifyAlbumImage,
+  getSpotifyTrackImage,
+  getSpotifySearchImage,
+  hasSpotifyCredentials,
+};

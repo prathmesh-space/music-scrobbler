@@ -1,111 +1,170 @@
-import { useState, useEffect } from 'react';
-import { getTopArtists, getTopAlbums, getTopTracks } from '../services/lastfm';
-import { TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Loader2, Minus, TrendingDown, TrendingUp } from 'lucide-react';
+import { getTopAlbums, getTopArtists, getTopTracks } from '../services/lastfm';
+import {
+  getSpotifyAlbumImage,
+  getSpotifyArtistImage,
+  getSpotifyTrackImage,
+} from '../services/spotify';
 import {
   buildSearchQuery,
   getSpotifySearchUrl,
   getYouTubeSearchUrl,
 } from '../utils/musicLinks';
 import { getLastFmImageUrl } from '../utils/lastfmImage.js';
-import { getSpotifyArtistImage } from '../services/spotify';
 
+const periods = [
+  { value: '7day', label: '7 Days' },
+  { value: '1month', label: '1 Month' },
+  { value: '3month', label: '3 Months' },
+  { value: '6month', label: '6 Months' },
+  { value: '12month', label: '1 Year' },
+  { value: 'overall', label: 'All Time' },
+];
+
+const extractArtistName = (item) => item.artist?.name || item.artist?.['#text'] || '';
+
+const buildImageCacheKey = (item, type) => {
+  if (type === 'artists') return `artist:${item.name}`;
+  if (type === 'albums') return `album:${item.name}:${extractArtistName(item)}`;
+  return `track:${item.name}:${extractArtistName(item)}`;
+};
 
 export default function Charts({ username }) {
- const [activeTab, setActiveTab] = useState('artists'); // artists, albums, tracks
+  const [activeTab, setActiveTab] = useState('artists');
   const [timePeriod, setTimePeriod] = useState('7day');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const [spotifyArtistImages, setSpotifyArtistImages] = useState({});
-
-  const periods = [
-    { value: '7day', label: '7 Days' },
-    { value: '1month', label: '1 Month' },
-    { value: '3month', label: '3 Months' },
-    { value: '6month', label: '6 Months' },
-    { value: '12month', label: '1 Year' },
-    { value: 'overall', label: 'All Time' },
-  ];
+  const [spotifyImages, setSpotifyImages] = useState({});
 
   useEffect(() => {
+    const fetchChartData = async () => {
+      setLoading(true);
+      try {
+        let result;
+        if (activeTab === 'artists') {
+          result = await getTopArtists(username, timePeriod, 50);
+          setData(result.artist || []);
+        } else if (activeTab === 'albums') {
+          result = await getTopAlbums(username, timePeriod, 50);
+          setData(result.album || []);
+        } else {
+          result = await getTopTracks(username, timePeriod, 50);
+          setData(result.track || []);
+        }
+      } catch (error) {
+        console.error('Error fetching chart data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchChartData();
   }, [activeTab, timePeriod, username]);
-
 
   useEffect(() => {
     let cancelled = false;
 
-    const hydrateSpotifyArtistImages = async () => {
-      const artistNames = data
-        .map((item) => item.name)
-        .filter(Boolean);
+    const hydrateSpotifyImages = async () => {
+      const missingItems = data.filter((item) => {
+        const hasLastFmImage = Boolean(getLastFmImageUrl(item.image));
+        const cacheKey = buildImageCacheKey(item, activeTab);
+        return !hasLastFmImage && !spotifyImages[cacheKey];
+      });
 
-      const uniqueArtists = [...new Set(artistNames)]
-        .filter((artistName) => !spotifyArtistImages[artistName]);
-
-      if (uniqueArtists.length === 0) return;
+      if (!missingItems.length) return;
 
       const resolved = await Promise.all(
-        uniqueArtists.map(async (artistName) => [artistName, await getSpotifyArtistImage(artistName)])
+        missingItems.map(async (item) => {
+          const artistName = extractArtistName(item);
+          const cacheKey = buildImageCacheKey(item, activeTab);
+
+          if (activeTab === 'artists') {
+            return [cacheKey, await getSpotifyArtistImage(item.name || '')];
+          }
+
+          if (activeTab === 'albums') {
+            return [
+              cacheKey,
+              await getSpotifyAlbumImage({
+                albumName: item.name || '',
+                artistName,
+              }),
+            ];
+          }
+
+          return [
+            cacheKey,
+            await getSpotifyTrackImage({
+              trackName: item.name || '',
+              artistName,
+            }),
+          ];
+        }),
       );
 
       if (cancelled) return;
 
-      setSpotifyArtistImages((previous) => {
+      setSpotifyImages((previous) => {
         const next = { ...previous };
-        resolved.forEach(([artistName, imageUrl]) => {
-          if (imageUrl) next[artistName] = imageUrl;
+        resolved.forEach(([cacheKey, imageUrl]) => {
+          if (imageUrl) next[cacheKey] = imageUrl;
         });
         return next;
       });
     };
 
-    if (activeTab === 'artists' && data.length > 0) {
-      hydrateSpotifyArtistImages();
+    if (data.length > 0) {
+      hydrateSpotifyImages();
     }
 
     return () => {
       cancelled = true;
     };
-  }, [activeTab, data, spotifyArtistImages]);
+  }, [activeTab, data, spotifyImages]);
 
-  const fetchChartData = async () => {
-    setLoading(true);
-    try {
-      let result;
-      if (activeTab === 'artists') {
-        result = await getTopArtists(username, timePeriod, 50);
-        setData(result.artist || []);
-      } else if (activeTab === 'albums') {
-        result = await getTopAlbums(username, timePeriod, 50);
-        setData(result.album || []);
-      } else {
-        result = await getTopTracks(username, timePeriod, 50);
-        setData(result.track || []);
-      }
-    } catch (error) {
-      console.error('Error fetching chart data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const rows = useMemo(
+    () =>
+      data.map((item, index) => {
+        const artistName = extractArtistName(item);
+        const query = buildSearchQuery({
+          type: activeTab,
+          name: item.name,
+          artist: artistName,
+        });
 
-  const getChangeIcon = () => {
-    // Simulated change indicator (you can enhance this with historical data)
-    const change = Math.random() * 10 - 5;
-    if (change > 2) return <TrendingUp className="w-4 h-4 text-green-400" />;
-    if (change < -2) return <TrendingDown className="w-4 h-4 text-red-400" />;
-    return <Minus className="w-4 h-4 text-gray-400" />;
-  };
+        const cacheKey = buildImageCacheKey(item, activeTab);
+        const imageUrl = getLastFmImageUrl(item.image) || spotifyImages[cacheKey] || '';
 
+        const simulatedChange = Math.random() * 10 - 5;
+        const changeIcon =
+          simulatedChange > 2 ? (
+            <TrendingUp className="w-4 h-4 text-green-400" />
+          ) : simulatedChange < -2 ? (
+            <TrendingDown className="w-4 h-4 text-red-400" />
+          ) : (
+            <Minus className="w-4 h-4 text-gray-400" />
+          );
+
+        return {
+          key: `${item.name}-${artistName}-${index}`,
+          rank: index + 1,
+          item,
+          artistName,
+          imageUrl,
+          spotifyUrl: getSpotifySearchUrl(query),
+          youTubeUrl: getYouTubeSearchUrl(query),
+          changeIcon,
+        };
+      }),
+    [activeTab, data, spotifyImages],
+  );
 
   return (
     <div className="min-h-screen bg-gray-900 py-8 px-4">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
         <h1 className="text-4xl font-bold text-white mb-8">Top Charts</h1>
 
-        {/* Tab Selector */}
         <div className="flex flex-wrap gap-4 mb-6">
           <button
             onClick={() => setActiveTab('artists')}
@@ -139,7 +198,6 @@ export default function Charts({ username }) {
           </button>
         </div>
 
-        {/* Time Period Selector */}
         <div className="flex flex-wrap gap-2 mb-8">
           {periods.map((period) => (
             <button
@@ -156,7 +214,6 @@ export default function Charts({ username }) {
           ))}
         </div>
 
-        {/* Chart Data */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-12 h-12 text-purple-400 animate-spin" />
@@ -167,84 +224,50 @@ export default function Charts({ username }) {
               <table className="w-full">
                 <thead className="bg-gray-700">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                      Rank
-                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Rank</th>
                     <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
                       {activeTab === 'artists' ? 'Artist' : activeTab === 'albums' ? 'Album' : 'Track'}
                     </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                      Plays
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                      Open
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">
-                      Trend
-                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Plays</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Open</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Trend</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {data.map((item, index) => (
-                    (() => {
-                      const artistName = item.artist?.name || item.artist?.['#text'];
-                      const query = buildSearchQuery({
-                        type: activeTab,
-                        name: item.name,
-                        artist: artistName,
-                      });
-                      const imageUrl = getLastFmImageUrl(item.image) || (activeTab === 'artists' ? spotifyArtistImages[item.name] : '');
-                      const youTubeUrl = getYouTubeSearchUrl(query);
-                      const spotifyUrl = getSpotifySearchUrl(query);
-
-                      return (
-
+                  {rows.map((row) => (
                     <tr
-                      key={index}
+                      key={row.key}
                       className="border-t border-gray-700 hover:bg-gray-700 transition"
                     >
                       <td className="px-6 py-4">
-                        <span className="text-2xl font-bold text-purple-400">
-                          #{index + 1}
-                        </span>
+                        <span className="text-2xl font-bold text-purple-400">#{row.rank}</span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-4">
-                          {imageUrl ? (
-                            <img
-                              src={imageUrl}
-                              alt={item.name}
-                              className="w-12 h-12 rounded"
-                            />
+                          {row.imageUrl ? (
+                            <img src={row.imageUrl} alt={row.item.name} className="w-12 h-12 rounded object-cover" />
                           ) : (
                             <div className="w-12 h-12 rounded bg-gray-700 flex items-center justify-center text-xs font-semibold text-gray-300">
-                              {item.name?.slice(0, 2).toUpperCase()}
+                              {row.item.name?.slice(0, 2).toUpperCase()}
                             </div>
                           )}
                           <div>
-                            <p className="text-white font-semibold">{item.name}</p>
-                            {activeTab === 'tracks' && (
-                              <p className="text-gray-400 text-sm">
-                                {artistName}
-                              </p>
-                            )}
-                            {activeTab === 'albums' && (
-                              <p className="text-gray-400 text-sm">
-                                {artistName}
-                              </p>
+                            <p className="text-white font-semibold">{row.item.name}</p>
+                            {activeTab !== 'artists' && (
+                              <p className="text-gray-400 text-sm">{row.artistName || 'Unknown artist'}</p>
                             )}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-white font-semibold">
-                          {parseInt(item.playcount).toLocaleString()}
+                          {Number.parseInt(row.item.playcount, 10).toLocaleString()}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-2">
                           <a
-                            href={youTubeUrl}
+                            href={row.youTubeUrl}
                             target="_blank"
                             rel="noreferrer"
                             className="px-3 py-1 text-xs font-semibold rounded-full bg-red-500/20 text-red-300 hover:bg-red-500/30 transition"
@@ -252,7 +275,7 @@ export default function Charts({ username }) {
                             YouTube
                           </a>
                           <a
-                            href={spotifyUrl}
+                            href={row.spotifyUrl}
                             target="_blank"
                             rel="noreferrer"
                             className="px-3 py-1 text-xs font-semibold rounded-full bg-green-500/20 text-green-300 hover:bg-green-500/30 transition"
@@ -261,11 +284,8 @@ export default function Charts({ username }) {
                           </a>
                         </div>
                       </td>
-                      <td className="px-6 py-4">{getChangeIcon(index)}</td>
+                      <td className="px-6 py-4">{row.changeIcon}</td>
                     </tr>
-                    );
-                    })()
-
                   ))}
                 </tbody>
               </table>
@@ -274,12 +294,9 @@ export default function Charts({ username }) {
         )}
 
         {data.length === 0 && !loading && (
-          <div className="text-center py-20 text-gray-400">
-            No data available for this time period
-          </div>
+          <div className="text-center py-20 text-gray-400">No data available for this time period</div>
         )}
       </div>
     </div>
   );
-
 }
