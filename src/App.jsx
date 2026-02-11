@@ -83,7 +83,7 @@ function App() {
               <Route path="/collage" element={<Collage username={username} />} />
               <Route path="/friends" element={<Friends username={username} />} />
               <Route path="/profile" element={<Profile username={username} />} />
-              <Route path="/recommendations" element={<Recommendations />} />
+              <Route path="/recommendations" element={<Recommendations username={username} />} />
               <Route path="/recognition" element={<Recognition />} />
               <Route path="*" element={<Navigate to="/" />} />
             </>
