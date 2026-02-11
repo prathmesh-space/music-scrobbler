@@ -335,6 +335,18 @@ const getArtistTopTracks = async (artist, limit = 20) => {
   return data.toptracks;
 };
 
+// Get top tags for an artist
+const getArtistTopTags = async (artist, limit = 20) => {
+  const data = await apiRequest({
+    method: 'artist.getTopTags',
+    artist,
+    limit,
+    autocorrect: 1,
+  });
+
+  return data.toptags;
+};
+
 
 
 // Get track info
@@ -384,6 +396,7 @@ export {
   getTopTracks,
   getSimilarArtists,
   getArtistTopTracks,
+  getArtistTopTags,
   getTrackInfo,
   getFriends,
   searchTracks,

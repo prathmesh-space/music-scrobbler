@@ -13,8 +13,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { Calendar, Clock3, Loader2, Music, TrendingUp } from 'lucide-react';
-import { getRecentTracks, getTopArtists } from '../services/lastfm';
+import { Calendar, Clock3, Hash, Loader2, MoreVertical, Music, TrendingUp } from 'lucide-react';
+import { getArtistTopTags, getRecentTracks, getTopArtists } from '../services/lastfm';
 import ListeningCalendar from '../components/Heatmap/ListeningCalender';
 
 const RANGE_OPTIONS = [
@@ -46,6 +46,7 @@ const Statistics = ({ username }) => {
   const [rangeDays, setRangeDays] = useState(14);
   const [recentTracks, setRecentTracks] = useState([]);
   const [topArtists, setTopArtists] = useState([]);
+  const [tagCloud, setTagCloud] = useState([]);
 
   const fetchStatistics = useCallback(async () => {
     if (!username) return;
@@ -62,16 +63,57 @@ const Statistics = ({ username }) => {
       const tracks = Array.isArray(recentData?.track) ? recentData.track : [];
       const artists = Array.isArray(artistsData?.artist) ? artistsData.artist : [];
 
-      setRecentTracks(tracks);
-      setTopArtists(artists.slice(0, 10).map((artist) => ({
+      const trimmedArtists = artists.slice(0, 10).map((artist) => ({
         name: artist.name,
         plays: Number.parseInt(artist.playcount, 10) || 0,
-      })));
+      }));
+
+      setRecentTracks(tracks);
+      setTopArtists(trimmedArtists);
+
+      const topTagsByArtist = await Promise.allSettled(
+        trimmedArtists.slice(0, 8).map(async (artist) => {
+          const tagsData = await getArtistTopTags(artist.name, 8);
+          const tags = Array.isArray(tagsData?.tag) ? tagsData.tag : [];
+
+          return {
+            artistPlays: artist.plays,
+            tags,
+          };
+        }),
+      );
+
+      const tagScores = new Map();
+
+      topTagsByArtist.forEach((result) => {
+        if (result.status !== 'fulfilled') return;
+
+        const { artistPlays, tags } = result.value;
+
+        tags.forEach((tag) => {
+          const tagName = typeof tag?.name === 'string' ? tag.name.trim() : '';
+          const tagCount = Number.parseInt(tag?.count, 10) || 0;
+
+          if (!tagName || tagCount <= 0) return;
+
+          const score = tagCount * Math.max(artistPlays, 1);
+          const previous = tagScores.get(tagName) || 0;
+          tagScores.set(tagName, previous + score);
+        });
+      });
+
+      const sortedTags = Array.from(tagScores.entries())
+        .map(([name, score]) => ({ name, score }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 24);
+
+      setTagCloud(sortedTags);
     } catch (fetchError) {
       console.error('Error fetching statistics:', fetchError);
       setError('Could not load statistics right now. Please try again in a moment.');
       setRecentTracks([]);
       setTopArtists([]);
+      setTagCloud([]);
     } finally {
       setLoading(false);
     }
@@ -168,6 +210,31 @@ const Statistics = ({ username }) => {
       weekdayScrobbles,
     };
   }, [rangeDays, recentTracks]);
+
+  const cloudTags = useMemo(() => {
+    if (!tagCloud.length) return [];
+
+    const scores = tagCloud.map((tag) => tag.score);
+    const minScore = Math.min(...scores);
+    const maxScore = Math.max(...scores);
+    const scoreRange = Math.max(maxScore - minScore, 1);
+
+    return tagCloud.map((tag, index) => {
+      const normalized = (tag.score - minScore) / scoreRange;
+      const fontSize = 18 + normalized * 44;
+      const opacity = 0.7 + normalized * 0.3;
+      const rotate = index % 7 === 0 ? -4 : index % 5 === 0 ? 4 : 0;
+
+      return {
+        ...tag,
+        style: {
+          fontSize: `${fontSize}px`,
+          opacity,
+          transform: `rotate(${rotate}deg)`,
+        },
+      };
+    });
+  }, [tagCloud]);
 
   if (loading) {
     return (
@@ -300,6 +367,30 @@ const Statistics = ({ username }) => {
         <section className="rounded-xl border border-gray-700 bg-gray-800 p-6">
           <h2 className="mb-4 text-lg font-semibold text-white">Listening Calendar</h2>
           <ListeningCalendar username={username} />
+        </section>
+
+        <section className="rounded-xl border border-gray-700 bg-gray-800 p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Hash className="h-5 w-5 text-pink-300" />
+              <h2 className="text-lg font-semibold text-white">Tag cloud</h2>
+            </div>
+            <MoreVertical className="h-5 w-5 text-pink-300" />
+          </div>
+
+          {cloudTags.length ? (
+            <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-4 gap-y-3 py-4 text-pink-100">
+              {cloudTags.map((tag) => (
+                <span key={tag.name} className="leading-none transition-transform duration-200 hover:scale-105" style={tag.style}>
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="py-8 text-center text-sm text-gray-400">No genre tags were available for your top artists in this period.</p>
+          )}
+
+          <p className="mt-2 text-center text-sm text-gray-400">Based on Artists (Last.fm)</p>
         </section>
       </div>
     </div>
