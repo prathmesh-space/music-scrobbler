@@ -24,7 +24,7 @@ const RANGE_OPTIONS = [
 ];
 
 const WEEKDAY_ORDER = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const CHART_COLORS = ['#8b5cf6', '#ec4899', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e', '#22d3ee'];
+const CHART_COLORS = ['#FFB7C5', '#D5F3D8', '#F2C7C7', '#EAA9BA', '#BEEBC5', '#F7D7DE', '#C9EFD0'];
 
 const startOfDay = (date) => {
   const result = new Date(date);
@@ -239,19 +239,19 @@ const Statistics = ({ username }) => {
   if (loading) {
     return (
       <div className="page-shell page-shell--center">
-        <Loader2 className="w-12 h-12 text-purple-400 animate-spin" />
+        <Loader2 className="w-12 h-12 text-[#FFB7C5] animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="page-shell">
+    <div className="page-shell text-[#4A3E3E]" style={{ fontFamily: "Krub, sans-serif" }}>
       <div className="max-w-7xl mx-auto space-y-8">
-        <section className="rounded-xl border border-gray-700 bg-gray-800 p-6">
+        <section className="rounded-2xl border border-[#FFB7C5]/40 bg-[#FFFFFF] p-6 shadow-lg">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-white">Statistics Dashboard</h1>
-              <p className="mt-1 text-sm text-gray-400">
+              <h1 className="text-3xl font-bold text-[#4A3E3E]" style={{ fontFamily: "Inter, sans-serif" }}>Statistics Dashboard</h1>
+              <p className="mt-1 text-sm text-[#7A6666]">
                 Explore your listening behavior by day, weekday, and hour.
               </p>
             </div>
@@ -262,10 +262,10 @@ const Statistics = ({ username }) => {
                   key={option.value}
                   type="button"
                   onClick={() => setRangeDays(option.value)}
-                  className={`rounded-md px-3 py-2 text-sm font-medium transition ${
+                  className={`rounded-xl px-3 py-2 text-sm font-semibold transition shadow-sm ${
                     rangeDays === option.value
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                      ? 'bg-[#FFB7C5] text-[#4A3E3E]'
+                      : 'bg-[#F2C7C7]/40 text-[#7A6666] hover:bg-[#F2C7C7]/70'
                   }`}
                 >
                   Last {option.label}
@@ -275,44 +275,44 @@ const Statistics = ({ username }) => {
           </div>
 
           {error ? (
-            <p className="mt-4 rounded-md border border-red-700 bg-red-950/40 px-4 py-3 text-sm text-red-200">{error}</p>
+            <p className="mt-4 rounded-xl border border-[#FFB7C5]/70 bg-[#F2C7C7]/40 px-4 py-3 text-sm text-[#7A4B56]">{error}</p>
           ) : null}
         </section>
 
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Scrobbles in range" value={computed.totalScrobbles.toLocaleString()} icon={<Music className="h-4 w-4 text-purple-300" />} />
-          <StatCard label="Average per day" value={computed.averageDaily.toFixed(1)} icon={<Calendar className="h-4 w-4 text-purple-300" />} />
-          <StatCard label="Active days" value={`${computed.activeDays}/${rangeDays}`} icon={<TrendingUp className="h-4 w-4 text-purple-300" />} />
-          <StatCard label="Peak hour" value={`${computed.topHour.label} (${computed.topHour.plays})`} icon={<Clock3 className="h-4 w-4 text-purple-300" />} />
+          <StatCard label="Scrobbles in range" value={computed.totalScrobbles.toLocaleString()} icon={<Music className="h-4 w-4 text-[#FFB7C5]" />} />
+          <StatCard label="Average per day" value={computed.averageDaily.toFixed(1)} icon={<Calendar className="h-4 w-4 text-[#FFB7C5]" />} />
+          <StatCard label="Active days" value={`${computed.activeDays}/${rangeDays}`} icon={<TrendingUp className="h-4 w-4 text-[#FFB7C5]" />} />
+          <StatCard label="Peak hour" value={`${computed.topHour.label} (${computed.topHour.plays})`} icon={<Clock3 className="h-4 w-4 text-[#FFB7C5]" />} />
         </section>
 
         <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-          <article className="rounded-xl border border-gray-700 bg-gray-800 p-6">
-            <h2 className="text-lg font-semibold text-white">Daily scrobbles</h2>
-            <p className="mb-4 text-sm text-gray-400">
-              Peak day: <span className="text-purple-300">{computed.peakDay.label}</span> with{' '}
-              <span className="text-white font-semibold">{computed.peakDay.scrobbles}</span> plays.
+          <article className="rounded-2xl border border-[#FFB7C5]/40 bg-[#FFFFFF] p-6 shadow-lg">
+            <h2 className="text-lg font-semibold text-[#4A3E3E]" style={{ fontFamily: "Inter, sans-serif" }}>Daily scrobbles</h2>
+            <p className="mb-4 text-sm text-[#7A6666]">
+              Peak day: <span className="font-semibold text-[#E28EA0]">{computed.peakDay.label}</span> with{' '}
+              <span className="font-semibold text-[#4A3E3E]">{computed.peakDay.scrobbles}</span> plays.
             </p>
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={computed.dailyScrobbles}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="label" stroke="#9ca3af" />
-                <YAxis stroke="#9ca3af" />
-                <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151' }} />
-                <Line type="monotone" dataKey="scrobbles" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 3 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#F2C7C7" />
+                <XAxis dataKey="label" stroke="#9D8686" />
+                <YAxis stroke="#9D8686" />
+                <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #F2C7C7', borderRadius: '10px' }} />
+                <Line type="monotone" dataKey="scrobbles" stroke="#FFB7C5" strokeWidth={3} dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
           </article>
 
-          <article className="rounded-xl border border-gray-700 bg-gray-800 p-6">
-            <h2 className="mb-4 text-lg font-semibold text-white">Listening by hour</h2>
+          <article className="rounded-2xl border border-[#D5F3D8] bg-[#FFFFFF] p-6 shadow-lg">
+            <h2 className="mb-4 text-lg font-semibold text-[#4A3E3E]" style={{ fontFamily: "Inter, sans-serif" }}>Listening by hour</h2>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={computed.hourlyScrobbles}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis dataKey="hour" stroke="#9ca3af" tickFormatter={(value) => `${value}`} />
-                <YAxis stroke="#9ca3af" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#D5F3D8" />
+                <XAxis dataKey="hour" stroke="#7A9181" tickFormatter={(value) => `${value}`} />
+                <YAxis stroke="#7A9181" />
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151' }}
+                  contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #D5F3D8', borderRadius: '10px' }}
                   formatter={(value) => [value, 'Plays']}
                   labelFormatter={(value) => `${formatHourLabel(value)} hour`}
                 />
@@ -320,7 +320,7 @@ const Statistics = ({ username }) => {
                   {computed.hourlyScrobbles.map((entry, index) => (
                     <Cell
                       key={`hour-${entry.hour}`}
-                      fill={entry.plays === computed.topHour.plays && entry.plays > 0 ? '#a78bfa' : CHART_COLORS[index % CHART_COLORS.length]}
+                      fill={entry.plays === computed.topHour.plays && entry.plays > 0 ? '#FFB7C5' : CHART_COLORS[index % CHART_COLORS.length]}
                     />
                   ))}
                 </Bar>
@@ -328,8 +328,8 @@ const Statistics = ({ username }) => {
             </ResponsiveContainer>
           </article>
 
-          <article className="rounded-xl border border-gray-700 bg-gray-800 p-6">
-            <h2 className="mb-4 text-lg font-semibold text-white">Weekday distribution</h2>
+          <article className="rounded-2xl border border-[#F2C7C7]/50 bg-[#FFFFFF] p-6 shadow-lg">
+            <h2 className="mb-4 text-lg font-semibold text-[#4A3E3E]" style={{ fontFamily: "Inter, sans-serif" }}>Weekday distribution</h2>
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie
@@ -345,41 +345,41 @@ const Statistics = ({ username }) => {
                     <Cell key={`weekday-${entry.day}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151' }} />
+                <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #F2C7C7', borderRadius: '10px' }} />
               </PieChart>
             </ResponsiveContainer>
           </article>
 
-          <article className="rounded-xl border border-gray-700 bg-gray-800 p-6">
-            <h2 className="mb-4 text-lg font-semibold text-white">Top artists (last month)</h2>
+          <article className="rounded-2xl border border-[#D5F3D8] bg-[#FFFFFF] p-6 shadow-lg">
+            <h2 className="mb-4 text-lg font-semibold text-[#4A3E3E]" style={{ fontFamily: "Inter, sans-serif" }}>Top artists (last month)</h2>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={topArtists} layout="vertical" margin={{ left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis type="number" stroke="#9ca3af" />
-                <YAxis type="category" width={120} dataKey="name" stroke="#9ca3af" />
-                <Tooltip contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151' }} />
-                <Bar dataKey="plays" fill="#8b5cf6" radius={[0, 6, 6, 0]} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#D5F3D8" />
+                <XAxis type="number" stroke="#7A9181" />
+                <YAxis type="category" width={120} dataKey="name" stroke="#7A9181" />
+                <Tooltip contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #D5F3D8', borderRadius: '10px' }} />
+                <Bar dataKey="plays" fill="#D5F3D8" radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </article>
         </section>
 
-        <section className="rounded-xl border border-gray-700 bg-gray-800 p-6">
-          <h2 className="mb-4 text-lg font-semibold text-white">Listening Calendar</h2>
+        <section className="rounded-2xl border border-[#FFB7C5]/40 bg-[#FFFFFF] p-6 shadow-lg">
+          <h2 className="mb-4 text-lg font-semibold text-[#4A3E3E]" style={{ fontFamily: "Inter, sans-serif" }}>Listening Calendar</h2>
           <ListeningCalendar username={username} />
         </section>
 
-        <section className="rounded-xl border border-gray-700 bg-gray-800 p-6">
+        <section className="rounded-2xl border border-[#F2C7C7]/60 bg-[#FFFFFF] p-6 shadow-lg">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Hash className="h-5 w-5 text-pink-300" />
-              <h2 className="text-lg font-semibold text-white">Tag cloud</h2>
+              <Hash className="h-5 w-5 text-[#FFB7C5]" />
+              <h2 className="text-lg font-semibold text-[#4A3E3E]" style={{ fontFamily: "Inter, sans-serif" }}>Tag cloud</h2>
             </div>
-            <MoreVertical className="h-5 w-5 text-pink-300" />
+            <MoreVertical className="h-5 w-5 text-[#FFB7C5]" />
           </div>
 
           {cloudTags.length ? (
-            <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-4 gap-y-3 py-4 text-pink-100">
+            <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-center gap-x-4 gap-y-3 py-4 text-[#A56C78]">
               {cloudTags.map((tag) => (
                 <span key={tag.name} className="leading-none transition-transform duration-200 hover:scale-105" style={tag.style}>
                   {tag.name}
@@ -387,10 +387,10 @@ const Statistics = ({ username }) => {
               ))}
             </div>
           ) : (
-            <p className="py-8 text-center text-sm text-gray-400">No genre tags were available for your top artists in this period.</p>
+            <p className="py-8 text-center text-sm text-[#7A6666]">No genre tags were available for your top artists in this period.</p>
           )}
 
-          <p className="mt-2 text-center text-sm text-gray-400">Based on Artists (Last.fm)</p>
+          <p className="mt-2 text-center text-sm text-[#7A6666]">Based on Artists (Last.fm)</p>
         </section>
       </div>
     </div>
@@ -398,12 +398,12 @@ const Statistics = ({ username }) => {
 };
 
 const StatCard = ({ label, value, icon }) => (
-  <article className="rounded-lg border border-gray-700 bg-gray-800 p-4">
-    <div className="mb-2 flex items-center gap-2 text-sm text-gray-400">
+  <article className="rounded-2xl border border-[#F2C7C7]/50 bg-[#FFFFFF] p-4 shadow-md">
+    <div className="mb-2 flex items-center gap-2 text-sm text-[#7A6666]">
       {icon}
       <span>{label}</span>
     </div>
-    <p className="text-2xl font-semibold text-white">{value}</p>
+    <p className="text-2xl font-semibold text-[#4A3E3E]" style={{ fontFamily: "Inter, sans-serif" }}>{value}</p>
   </article>
 );
 

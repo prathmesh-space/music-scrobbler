@@ -188,7 +188,7 @@ export default function Charts({ username }) {
       {/* Controls Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {/* Tab Selector */}
-        <div className="bg-white rounded-2xl p-5 shadow-md">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-5 shadow-lg border border-primary/10">
           <label className="text-muted text-xs font-semibold mb-3 block uppercase tracking-wide">Category</label>
           <div className="flex gap-2">
             {['artists', 'albums', 'tracks'].map((tab) => (
@@ -197,8 +197,8 @@ export default function Charts({ username }) {
                 onClick={() => setActiveTab(tab)} 
                 className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                   activeTab === tab 
-                    ? 'bg-primary text-white shadow-md' 
-                    : 'bg-border/50 text-muted hover:bg-primary/10 hover:text-text'
+                    ? 'bg-primary text-white shadow-md ring-2 ring-primary/20' 
+                    : 'bg-border/60 text-muted shadow-sm hover:bg-primary/10 hover:text-text hover:shadow-md'
                 }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -208,12 +208,12 @@ export default function Charts({ username }) {
         </div>
 
         {/* Time Period Selector */}
-        <div className="bg-white rounded-2xl p-5 shadow-md">
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-5 shadow-lg border border-primary/10">
           <label className="text-muted text-xs font-semibold mb-3 block uppercase tracking-wide">Time Period</label>
           <select 
             value={timePeriod} 
             onChange={(e) => setTimePeriod(e.target.value)} 
-            className="w-full px-4 py-2.5 bg-border/50 rounded-xl text-text font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+            className="w-full px-4 py-2.5 bg-border/70 rounded-xl text-text font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all shadow-md border border-primary/10"
           >
             {periods.map((period) => (
               <option key={period.value} value={period.value}>
@@ -235,7 +235,7 @@ export default function Charts({ username }) {
           {rows.map((row) => (
             <div 
               key={row.key} 
-              className="bg-white rounded-2xl p-5 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              className="bg-white/95 backdrop-blur-sm rounded-2xl p-5 shadow-lg border border-primary/10 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
             >
               <div className="flex items-center gap-5">
                 {/* Rank Badge - Fixed Size */}
@@ -254,10 +254,10 @@ export default function Charts({ username }) {
                     <img 
                       src={row.imageUrl} 
                       alt={row.item.name} 
-                      className="w-16 h-16 rounded-lg object-cover shadow-sm"
+                      className="w-14 h-14 rounded-lg object-cover shadow-md ring-1 ring-primary/10"
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-border to-primary/10 flex items-center justify-center shadow-sm">
+                    <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-border to-primary/10 flex items-center justify-center shadow-md ring-1 ring-primary/10">
                       <span className="text-muted text-[10px] font-medium">No Art</span>
                     </div>
                   )}
@@ -286,7 +286,7 @@ export default function Charts({ username }) {
                     href={row.spotifyUrl} 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="px-5 py-2.5 rounded-xl bg-accent text-text text-sm font-bold hover:bg-accent/80 transition-all shadow-sm hover:shadow-md text-center whitespace-nowrap"
+                    className="px-5 py-2.5 rounded-xl bg-accent text-text text-sm font-bold hover:bg-accent/80 transition-all shadow-md hover:shadow-lg text-center whitespace-nowrap"
                   >
                     🎵 Spotify
                   </a>
@@ -294,7 +294,7 @@ export default function Charts({ username }) {
                     href={row.youTubeUrl} 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-all shadow-sm hover:shadow-md text-center whitespace-nowrap"
+                    className="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-all shadow-md hover:shadow-lg text-center whitespace-nowrap"
                   >
                     ▶️ YouTube
                   </a>
