@@ -10,12 +10,23 @@ class AudioRecorder {
     this.mediaRecorder = null;
     this.audioChunks = [];
     this.stream = null;
+    this.mimeType = 'audio/webm';
   }
 
   async startRecording() {
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      this.mediaRecorder = new MediaRecorder(this.stream);
+      const preferredMimeType = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4',
+      ].find((type) => MediaRecorder.isTypeSupported(type));
+
+      this.mediaRecorder = preferredMimeType
+        ? new MediaRecorder(this.stream, { mimeType: preferredMimeType })
+        : new MediaRecorder(this.stream);
+
+      this.mimeType = this.mediaRecorder.mimeType || preferredMimeType || this.mimeType;
       this.audioChunks = [];
 
       this.mediaRecorder.ondataavailable = (event) => {
@@ -40,7 +51,7 @@ class AudioRecorder {
       }
 
       this.mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
+        const audioBlob = new Blob(this.audioChunks, { type: this.mimeType || 'audio/webm' });
         this.cleanup();
         resolve(audioBlob);
       };
@@ -138,8 +149,16 @@ export default function SongRecognition({ onResult }) {
 
   const recognizeSong = async (audioBlob) => {
     try {
-      const audioFile = new File([audioBlob], 'recording.wav', {
-        type: audioBlob.type || 'audio/wav',
+      const extensionByMimeType = {
+        'audio/webm;codecs=opus': 'webm',
+        'audio/webm': 'webm',
+        'audio/mp4': 'mp4',
+      };
+      const mimeType = audioBlob.type || 'audio/webm';
+      const extension = extensionByMimeType[mimeType] || 'webm';
+
+      const audioFile = new File([audioBlob], `recording.${extension}`, {
+        type: mimeType,
       });
       const data = await identifySong(audioFile);
       setResult(data.result || data.raw || null);
