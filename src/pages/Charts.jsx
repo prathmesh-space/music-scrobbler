@@ -100,10 +100,22 @@ export default function Charts({ username }) {
     const cacheKey = buildImageCacheKey(item, activeTab);
     const imageUrl = getLastFmImageUrl(item.image) || spotifyImages[cacheKey] || '';
     const simulatedChange = Math.random() * 10 - 5;
-    const changeIcon = simulatedChange > 2 ? <TrendingUp className="w-4 h-4 text-green-400" /> : simulatedChange < -2 ? <TrendingDown className="w-4 h-4 text-red-400" /> : <Minus className="w-4 h-4 text-gray-400" />;
-    return { key: `${item.name}-${artistName}-${index}`, rank: index + 1, item, artistName, imageUrl, spotifyUrl: getSpotifySearchUrl(query), youTubeUrl: getYouTubeSearchUrl(query), changeIcon };
+    const changeIcon = simulatedChange > 2 
+      ? <TrendingUp className="w-4 h-4 text-accent" /> 
+      : simulatedChange < -2 
+      ? <TrendingDown className="w-4 h-4 text-primary" /> 
+      : <Minus className="w-4 h-4 text-muted" />;
+    return { 
+      key: `${item.name}-${artistName}-${index}`, 
+      rank: index + 1, 
+      item, 
+      artistName, 
+      imageUrl, 
+      spotifyUrl: getSpotifySearchUrl(query), 
+      youTubeUrl: getYouTubeSearchUrl(query), 
+      changeIcon 
+    };
   }), [activeTab, data, spotifyImages]);
-
 
   const exportPng = () => {
     const width = 1200;
@@ -113,13 +125,13 @@ export default function Charts({ username }) {
     canvas.width = width;
     canvas.height = height;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#111827';
+    ctx.fillStyle = '#F2C7C7';
     ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = '#a78bfa';
-    ctx.font = 'bold 28px sans-serif';
+    ctx.fillStyle = '#FFB7C5';
+    ctx.font = 'bold 28px Inter, sans-serif';
     ctx.fillText(`Music Scrobbler ${activeTab} (${timePeriod})`, 30, 44);
-    ctx.fillStyle = '#e5e7eb';
-    ctx.font = '16px sans-serif';
+    ctx.fillStyle = '#1F1F1F';
+    ctx.font = '16px Krub, sans-serif';
     rows.slice(0, 30).forEach((row, index) => {
       const y = 80 + index * rowHeight;
       ctx.fillText(`#${row.rank}  ${row.item.name} — ${row.artistName} (${row.item.playcount || 0})`, 30, y);
@@ -131,7 +143,10 @@ export default function Charts({ username }) {
   };
 
   const exportCsv = () => {
-    const csvRows = [['Rank', 'Name', 'Artist', 'Playcount'], ...rows.map((row) => [row.rank, row.item.name || '', row.artistName || '', row.item.playcount || ''])];
+    const csvRows = [
+      ['Rank', 'Name', 'Artist', 'Playcount'], 
+      ...rows.map((row) => [row.rank, row.item.name || '', row.artistName || '', row.item.playcount || ''])
+    ];
     const csv = csvRows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -143,38 +158,152 @@ export default function Charts({ username }) {
   };
 
   return (
-    <div className="page-shell">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-4xl font-bold text-white">Top Charts</h1>
-          <button type="button" onClick={exportPng} className="inline-flex items-center gap-2 rounded-md border border-indigo-500/60 bg-indigo-500/10 px-3 py-2 text-sm text-indigo-200 hover:bg-indigo-500/20"><Download className="h-4 w-4" /> Export PNG</button>
-          <button type="button" onClick={exportCsv} className="inline-flex items-center gap-2 rounded-md border border-purple-500/60 bg-purple-500/10 px-3 py-2 text-sm text-purple-200 hover:bg-purple-500/20"><Download className="h-4 w-4" /> Export CSV</button>
+    <div className="page-container max-w-5xl">
+      {/* Header Card */}
+      <div className="bg-white rounded-3xl p-8 mb-6 shadow-lg">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="font-heading text-4xl font-bold text-text mb-2">Top Charts</h1>
+            <p className="text-muted text-sm">Discover your most played music</p>
+          </div>
+          <div className="flex gap-3">
+            <button 
+              type="button" 
+              onClick={exportPng} 
+              className="inline-flex items-center gap-2 rounded-full bg-accent text-text px-5 py-2.5 text-sm font-semibold hover:bg-accent/80 transition-all shadow-md hover:shadow-lg"
+            >
+              <Download className="h-4 w-4" /> Export PNG
+            </button>
+            <button 
+              type="button" 
+              onClick={exportCsv} 
+              className="inline-flex items-center gap-2 rounded-full bg-primary text-white px-5 py-2.5 text-sm font-semibold hover:bg-primary/90 transition-all shadow-md hover:shadow-lg"
+            >
+              <Download className="h-4 w-4" /> Export CSV
+            </button>
+          </div>
         </div>
+      </div>
 
-        <div className="flex flex-wrap gap-4 mb-6">
-          {['artists', 'albums', 'tracks'].map((tab) => <button key={tab} onClick={() => setActiveTab(tab)} className={`px-6 py-3 rounded-lg font-semibold transition ${activeTab === tab ? 'bg-purple-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}>Top {tab[0].toUpperCase()}{tab.slice(1)}</button>)}
-        </div>
-
-        <div className="bg-gray-800 rounded-lg p-6 mb-6 border border-gray-700">
-          <label className="block text-gray-400 mb-2">Time Period ([ and ] keyboard shortcuts)</label>
-          <select value={timePeriod} onChange={(e) => setTimePeriod(e.target.value)} className="w-full md:w-64 px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-purple-500 focus:outline-none">
-            {periods.map((period) => <option key={period.value} value={period.value}>{period.label}</option>)}
-          </select>
-        </div>
-
-        {loading ? <div className="flex justify-center py-20"><Loader2 className="w-12 h-12 text-purple-400 animate-spin" /></div> : (
-          <div className="space-y-4">
-            {rows.map((row) => (
-              <div key={row.key} className="bg-gray-800 rounded-lg p-4 border border-gray-700 flex items-center space-x-4 hover:border-purple-500 transition-colors">
-                <div className="text-2xl font-bold text-purple-400 w-12">#{row.rank}</div>
-                {row.imageUrl ? <img src={row.imageUrl} alt={row.item.name} className="w-16 h-16 rounded-lg object-cover" /> : <div className="w-16 h-16 rounded-lg bg-gray-700 flex items-center justify-center"><span className="text-gray-500 text-xs">No Image</span></div>}
-                <div className="flex-1"><h3 className="text-xl font-semibold text-white">{row.item.name}</h3><p className="text-gray-400">{row.artistName}</p><p className="text-purple-400 font-medium">{Number(row.item.playcount || 0).toLocaleString()} plays</p></div>
-                <div className="flex items-center space-x-4">{row.changeIcon}<a href={row.spotifyUrl} target="_blank" rel="noopener noreferrer" className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">Spotify</a><a href={row.youTubeUrl} target="_blank" rel="noopener noreferrer" className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">YouTube</a></div>
-              </div>
+      {/* Controls Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* Tab Selector */}
+        <div className="bg-white rounded-2xl p-5 shadow-md">
+          <label className="text-muted text-xs font-semibold mb-3 block uppercase tracking-wide">Category</label>
+          <div className="flex gap-2">
+            {['artists', 'albums', 'tracks'].map((tab) => (
+              <button 
+                key={tab} 
+                onClick={() => setActiveTab(tab)} 
+                className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                  activeTab === tab 
+                    ? 'bg-primary text-white shadow-md' 
+                    : 'bg-border/50 text-muted hover:bg-primary/10 hover:text-text'
+                }`}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
             ))}
           </div>
-        )}
+        </div>
+
+        {/* Time Period Selector */}
+        <div className="bg-white rounded-2xl p-5 shadow-md">
+          <label className="text-muted text-xs font-semibold mb-3 block uppercase tracking-wide">Time Period</label>
+          <select 
+            value={timePeriod} 
+            onChange={(e) => setTimePeriod(e.target.value)} 
+            className="w-full px-4 py-2.5 bg-border/50 rounded-xl text-text font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+          >
+            {periods.map((period) => (
+              <option key={period.value} value={period.value}>
+                {period.label}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
+
+      {/* Charts List - Fixed Size Cards */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl shadow-lg">
+          <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
+          <p className="text-muted text-sm">Loading your charts...</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {rows.map((row) => (
+            <div 
+              key={row.key} 
+              className="bg-white rounded-2xl p-5 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+            >
+              <div className="flex items-center gap-5">
+                {/* Rank Badge - Fixed Size */}
+                <div className={`flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center font-heading font-bold text-lg shadow-md ${
+                  row.rank === 1 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500 text-yellow-900' :
+                  row.rank === 2 ? 'bg-gradient-to-br from-gray-300 to-gray-400 text-gray-700' :
+                  row.rank === 3 ? 'bg-gradient-to-br from-orange-300 to-orange-400 text-orange-900' :
+                  'bg-gradient-to-br from-primary/30 to-accent/30 text-text'
+                }`}>
+                  {row.rank}
+                </div>
+
+                {/* Image - Fixed Size */}
+                <div className="flex-shrink-0">
+                  {row.imageUrl ? (
+                    <img 
+                      src={row.imageUrl} 
+                      alt={row.item.name} 
+                      className="w-16 h-16 rounded-lg object-cover shadow-sm"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-border to-primary/10 flex items-center justify-center shadow-sm">
+                      <span className="text-muted text-[10px] font-medium">No Art</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Info - Flexible Width */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-heading font-bold text-text truncate mb-1">
+                    {row.item.name}
+                  </h3>
+                  <p className="text-muted text-sm truncate mb-2">{row.artistName}</p>
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
+                      <span className="inline-block w-2 h-2 rounded-full bg-primary"></span>
+                      {Number(row.item.playcount || 0).toLocaleString()} plays
+                    </span>
+                    <span className="text-muted">
+                      {row.changeIcon}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Actions - Fixed Size Buttons */}
+                <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
+                  <a 
+                    href={row.spotifyUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="px-5 py-2.5 rounded-xl bg-accent text-text text-sm font-bold hover:bg-accent/80 transition-all shadow-sm hover:shadow-md text-center whitespace-nowrap"
+                  >
+                    🎵 Spotify
+                  </a>
+                  <a 
+                    href={row.youTubeUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-all shadow-sm hover:shadow-md text-center whitespace-nowrap"
+                  >
+                    ▶️ YouTube
+                  </a>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

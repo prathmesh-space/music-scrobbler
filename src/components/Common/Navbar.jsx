@@ -1,14 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Command, LogOut, Search } from 'lucide-react';
+import { useEffect } from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 import { navigationItems } from '../../config/routes';
-
-const navLinkClasses = ({ isActive }) =>
-  `font-['Inter'] text-base tracking-wide transition-all duration-200 whitespace-nowrap px-6 py-3 rounded-full ${
-    isActive
-      ? 'bg-[#FDF6EC] text-black font-bold'
-      : 'text-[#FDF6EC]/85 hover:font-bold hover:text-[#FDF6EC]'
-  }`;
 
 const RECENT_ROUTES_KEY = 'music-scrobbler-recent-routes';
 
@@ -22,12 +15,7 @@ const getStoredRecentRoutes = () => {
 };
 
 const Navbar = ({ username, onLogout }) => {
-  const [commandOpen, setCommandOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const commandInputRef = useRef(null);
-
   const location = useLocation();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const matchedRoute = navigationItems.find((item) => item.path === location.pathname);
@@ -38,124 +26,148 @@ const Navbar = ({ username, onLogout }) => {
     localStorage.setItem(RECENT_ROUTES_KEY, JSON.stringify(next));
   }, [location.pathname]);
 
-  useEffect(() => {
-    if (commandOpen) {
-      requestAnimationFrame(() => {
-        commandInputRef.current?.focus();
-      });
-    }
-  }, [commandOpen]);
-
-  const filteredItems = useMemo(() => {
-    const cleanQuery = query.trim().toLowerCase();
-    if (!cleanQuery) return navigationItems;
-
-    return navigationItems.filter((item) =>
-      [item.label, item.description, item.mobileLabel]
-        .join(' ')
-        .toLowerCase()
-        .includes(cleanQuery),
-    );
-  }, [query]);
-
-  const closeCommand = () => {
-    setCommandOpen(false);
-    setQuery('');
-  };
-
-  const goToRoute = (path) => {
-    navigate(path);
-    closeCommand();
-  };
-
   return (
     <>
-      <header className="sticky top-0 z-50 bg-[#FDF6EC] pt-10 pb-6">
-  <div className="relative mx-auto w-[92%] max-w-6xl rounded-3xl bg-black px-16 py-8 shadow-2xl">
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Krub:wght@400;500;600&display=swap" rel="stylesheet" />
+      
+      <header style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        backgroundColor: '#FFFFFF',
+        borderBottom: '2px solid #FFB7C5',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+      }}>
+        <div style={{
+          maxWidth: '1280px',
+          margin: '0 auto',
+          padding: '1rem 1.5rem'
+        }}>
+          
+          {/* Top Bar: Logo and User */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '1rem'
+          }}>
+            <Link
+              to="/"
+              style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '1.875rem',
+                fontWeight: 800,
+                letterSpacing: '-0.025em',
+                color: '#000000',
+                textDecoration: 'none',
+                transition: 'color 0.3s'
+              }}
+              onMouseEnter={(e) => e.target.style.color = '#FFB7C5'}
+              onMouseLeave={(e) => e.target.style.color = '#000000'}
+            >
+              Music Scrobbler
+            </Link>
 
-    {/* LEFT LINKS */}
-    <div className="flex items-center gap-10">
-      {navigationItems.slice(0, Math.ceil(navigationItems.length / 2)).map((item, i) => (
-        <NavLink
-          key={item.path}
-          to={item.path}
-          end={i === 0}
-          className={({ isActive }) =>
-            `font-['Inter'] text-lg tracking-wide transition-all duration-200 ${
-              isActive
-                ? 'text-white font-bold'
-                : 'text-white/70 hover:text-white hover:font-bold'
-            }`
-          }
-        >
-          {item.label}
-        </NavLink>
-      ))}
-    </div>
-
-    {/* CENTER LOGO */}
-    <Link
-      to="/"
-      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-['Inter'] text-3xl font-semibold tracking-wide text-white hover:font-bold transition"
-    >
-      Music Scrobbler
-    </Link>
-
-    {/* RIGHT LINKS */}
-    <div className="flex items-center justify-end gap-10">
-      {navigationItems.slice(Math.ceil(navigationItems.length / 2)).map((item) => (
-        <NavLink
-          key={item.path}
-          to={item.path}
-          className={({ isActive }) =>
-            `font-['Inter'] text-lg tracking-wide transition-all duration-200 ${
-              isActive
-                ? 'text-white font-bold'
-                : 'text-white/70 hover:text-white hover:font-bold'
-            }`
-          }
-        >
-          {item.label}
-        </NavLink>
-      ))}
-    </div>
-
-  </div>
-</header>
-
-      {commandOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" onClick={closeCommand}>
-          <div
-            className="mx-auto mt-40 w-full max-w-2xl rounded-3xl bg-[#FDF6EC] p-8 shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mb-6 flex items-center gap-3 rounded-full border border-[#A31621] px-5 py-3">
-              <Search className="h-5 w-5 text-black/50" />
-              <input
-                ref={commandInputRef}
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search pages..."
-                className="w-full bg-transparent text-base font-['Inter'] outline-none"
-              />
-            </div>
-
-            <div className="max-h-96 space-y-3 overflow-y-auto">
-              {filteredItems.map((item) => (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem'
+            }}>
+              {username && (
+                <span style={{
+                  fontFamily: 'Krub, sans-serif',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  color: 'rgba(0, 0, 0, 0.6)'
+                }}>
+                  @{username}
+                </span>
+              )}
+              {onLogout && (
                 <button
-                  key={item.path}
-                  type="button"
-                  onClick={() => goToRoute(item.path)}
-                  className="w-full rounded-2xl border border-[#A31621] px-6 py-4 text-left font-['Inter'] text-base transition hover:bg-[#A31621] hover:text-white hover:font-bold"
+                  onClick={onLogout}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    borderRadius: '9999px',
+                    backgroundColor: '#000000',
+                    padding: '0.625rem 1.25rem',
+                    fontFamily: 'Krub, sans-serif',
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    color: '#ffffff',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.3s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(0, 0, 0, 0.8)'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#000000'}
                 >
-                  <p>{item.label}</p>
-                  <p className="text-sm opacity-70">{item.description}</p>
+                  <LogOut style={{ height: '14px', width: '14px' }} />
+                  Logout
                 </button>
-              ))}
+              )}
             </div>
           </div>
+
+          {/* Navigation Bar */}
+          <nav style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            overflowX: 'auto',
+            paddingBottom: '0.5rem',
+            msOverflowStyle: 'none',
+            scrollbarWidth: 'none'
+          }}>
+            {navigationItems.map((item, i) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={i === 0}
+                style={({ isActive }) => ({
+                  flexShrink: 0,
+                  fontFamily: 'Krub, sans-serif',
+                  fontSize: '0.875rem',
+                  fontWeight: isActive ? 600 : 500,
+                  letterSpacing: '0.025em',
+                  transition: 'all 0.3s',
+                  borderRadius: '9999px',
+                  padding: '0.625rem 1.25rem',
+                  whiteSpace: 'nowrap',
+                  textDecoration: 'none',
+                  backgroundColor: isActive ? '#FFB7C5' : '#F2C7C7',
+                  color: isActive ? '#ffffff' : 'rgba(0, 0, 0, 0.7)'
+                })}
+                onMouseEnter={(e) => {
+                  if (!e.currentTarget.classList.contains('active')) {
+                    e.currentTarget.style.backgroundColor = '#D5F3D8';
+                    e.currentTarget.style.color = '#000000';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!e.currentTarget.classList.contains('active')) {
+                    e.currentTarget.style.backgroundColor = '#F2C7C7';
+                    e.currentTarget.style.color = 'rgba(0, 0, 0, 0.7)';
+                  }
+                }}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+
         </div>
-      )}
+
+        <style>{`
+          nav::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
+      </header>
     </>
   );
 };
