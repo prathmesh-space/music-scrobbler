@@ -16,6 +16,7 @@ const REQUEST_TIMEOUT_MS = 20000;
 const encoder = new TextEncoder();
 
 const canUseDevProxy = () => ACR_CONFIG.isDev && !ACR_CONFIG.proxyUrl && Boolean(ACR_CONFIG.host);
+const hasAcrCredentials = () => Boolean(ACR_CONFIG.accessKey && ACR_CONFIG.accessSecret);
 
 const normalizeHost = (host) => host.replace(/^https?:\/\//, '').replace(/\/+$/, '');
 
@@ -25,7 +26,11 @@ const getDirectIdentifyUrl = () => `${normalizeScheme(ACR_CONFIG.scheme)}://${no
 
 const getRequestUrl = () => {
   if (ACR_CONFIG.proxyUrl) {
-    return ACR_CONFIG.proxyUrl;
+    if (ACR_CONFIG.proxyUrl.endsWith(ACR_PATH)) {
+      return ACR_CONFIG.proxyUrl;
+    }
+
+    return `${ACR_CONFIG.proxyUrl.replace(/\/+$/, '')}${ACR_PATH}`;
   }
 
   if (canUseDevProxy()) {
@@ -48,7 +53,7 @@ const ensureReadyToRecognize = (audioFile) => {
     return;
   }
 
-  if (!ACR_CONFIG.host || !ACR_CONFIG.accessKey || !ACR_CONFIG.accessSecret) {
+  if (!ACR_CONFIG.host || !hasAcrCredentials()) {
     throw new Error(
       'Missing ACRCloud configuration. Set VITE_ACR_PROXY_URL or all of VITE_ACR_ACCESS_KEY, VITE_ACR_ACCESS_SECRET, and VITE_ACR_HOST.'
     );
@@ -83,7 +88,7 @@ const signAcrRequest = async ({ accessSecret, stringToSign }) => {
   return base64FromBuffer(signatureArrayBuffer);
 };
 
-const buildDirectRequestForm = async (audioFile) => {
+const buildSignedRequestForm = async (audioFile) => {
   const timestamp = String(Math.floor(Date.now() / 1000));
   const stringToSign = ['POST', ACR_PATH, ACR_CONFIG.accessKey, DATA_TYPE, SIGNATURE_VERSION, timestamp].join('\n');
 
@@ -146,9 +151,9 @@ const recognizeSong = async (audioFile) => {
   ensureReadyToRecognize(audioFile);
 
   try {
-    const usingProxy = Boolean(ACR_CONFIG.proxyUrl);
+    const usingUnsignedProxy = Boolean(ACR_CONFIG.proxyUrl) && !hasAcrCredentials();
     const url = getRequestUrl();
-    const formData = usingProxy ? buildProxyRequestForm(audioFile) : await buildDirectRequestForm(audioFile);
+    const formData = usingUnsignedProxy ? buildProxyRequestForm(audioFile) : await buildSignedRequestForm(audioFile);
 
     const response = await axios.post(url, formData, {
       timeout: REQUEST_TIMEOUT_MS,
