@@ -1,121 +1,157 @@
 import axios from 'axios';
 
-const ACR_ACCESS_KEY = import.meta.env.VITE_ACR_ACCESS_KEY;
-const ACR_ACCESS_SECRET = import.meta.env.VITE_ACR_ACCESS_SECRET;
-const ACR_HOST = import.meta.env.VITE_ACR_HOST;
-const ACR_PROXY_URL = import.meta.env.VITE_ACR_PROXY_URL;
-const IS_DEV = import.meta.env.DEV;
+const ACR_CONFIG = {
+  accessKey: (import.meta.env.VITE_ACR_ACCESS_KEY || '').trim(),
+  accessSecret: (import.meta.env.VITE_ACR_ACCESS_SECRET || '').trim(),
+  host: (import.meta.env.VITE_ACR_HOST || '').trim(),
+  proxyUrl: (import.meta.env.VITE_ACR_PROXY_URL || '').trim(),
+  isDev: Boolean(import.meta.env.DEV),
+};
 
+const ACR_PATH = '/v1/identify';
+const SIGNATURE_VERSION = '1';
+const DATA_TYPE = 'audio';
+const REQUEST_TIMEOUT_MS = 20000;
 const encoder = new TextEncoder();
 
-const shouldUseViteProxyForDirectCalls = () => Boolean(IS_DEV && !ACR_PROXY_URL && ACR_HOST);
+const canUseDevProxy = () => ACR_CONFIG.isDev && !ACR_CONFIG.proxyUrl && Boolean(ACR_CONFIG.host);
 
-const toBase64 = (bytes) => {
+const normalizeHost = (host) => host.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+
+const getDirectIdentifyUrl = () => `https://${normalizeHost(ACR_CONFIG.host)}${ACR_PATH}`;
+
+const getRequestUrl = () => {
+  if (ACR_CONFIG.proxyUrl) {
+    return ACR_CONFIG.proxyUrl;
+  }
+
+  if (canUseDevProxy()) {
+    return `/acr-proxy${ACR_PATH}`;
+  }
+
+  return getDirectIdentifyUrl();
+};
+
+const ensureReadyToRecognize = (audioFile) => {
+  if (!audioFile) {
+    throw new Error('Please select an audio file to identify.');
+  }
+
+  if (typeof audioFile.size === 'number' && audioFile.size <= 0) {
+    throw new Error('The selected audio file is empty. Please choose a valid recording.');
+  }
+
+  if (ACR_CONFIG.proxyUrl) {
+    return;
+  }
+
+  if (!ACR_CONFIG.host || !ACR_CONFIG.accessKey || !ACR_CONFIG.accessSecret) {
+    throw new Error(
+      'Missing ACRCloud configuration. Set VITE_ACR_PROXY_URL or all of VITE_ACR_ACCESS_KEY, VITE_ACR_ACCESS_SECRET, and VITE_ACR_HOST.'
+    );
+  }
+};
+
+const base64FromBuffer = (arrayBuffer) => {
+  const bytes = new Uint8Array(arrayBuffer);
   let binary = '';
+
   bytes.forEach((byte) => {
     binary += String.fromCharCode(byte);
   });
+
   return btoa(binary);
 };
 
-const hmacSha1Base64 = async (message, secret) => {
+const signAcrRequest = async ({ accessSecret, stringToSign }) => {
   if (!globalThis.crypto?.subtle) {
-    throw new Error('This browser does not support Web Crypto API for ACR signing.');
+    throw new Error('Web Crypto API is unavailable in this browser, so ACRCloud request signing failed.');
   }
 
   const key = await globalThis.crypto.subtle.importKey(
     'raw',
-    encoder.encode(secret),
+    encoder.encode(accessSecret),
     { name: 'HMAC', hash: 'SHA-1' },
     false,
     ['sign']
   );
 
-  const signature = await globalThis.crypto.subtle.sign('HMAC', key, encoder.encode(message));
-  return toBase64(new Uint8Array(signature));
+  const signatureArrayBuffer = await globalThis.crypto.subtle.sign('HMAC', key, encoder.encode(stringToSign));
+  return base64FromBuffer(signatureArrayBuffer);
 };
 
-const ensureAudioFile = async (audioFile) => {
-  if (!audioFile) {
-    throw new Error('Please select an audio file to identify.');
-  }
+const buildDirectRequestForm = async (audioFile) => {
+  const timestamp = String(Math.floor(Date.now() / 1000));
+  const stringToSign = ['POST', ACR_PATH, ACR_CONFIG.accessKey, DATA_TYPE, SIGNATURE_VERSION, timestamp].join('\n');
 
-  const sampleBuffer = await audioFile.arrayBuffer();
+  const signature = await signAcrRequest({
+    accessSecret: ACR_CONFIG.accessSecret,
+    stringToSign,
+  });
 
-  return {
-    file: audioFile,
-    sampleBuffer,
-  };
+  const formData = new FormData();
+  formData.append('access_key', ACR_CONFIG.accessKey);
+  formData.append('sample_bytes', String(audioFile.size));
+  formData.append('sample', audioFile, audioFile.name || 'sample.wav');
+  formData.append('timestamp', timestamp);
+  formData.append('signature', signature);
+  formData.append('data_type', DATA_TYPE);
+  formData.append('signature_version', SIGNATURE_VERSION);
+
+  return formData;
 };
 
-const validateDirectConfig = () => {
-  if (!ACR_ACCESS_KEY || !ACR_ACCESS_SECRET || !ACR_HOST) {
-    throw new Error(
-      'Missing ACRCloud configuration. Set VITE_ACR_PROXY_URL or all of VITE_ACR_ACCESS_KEY, VITE_ACR_ACCESS_SECRET, VITE_ACR_HOST.'
-    );
-  }
+const buildProxyRequestForm = (audioFile) => {
+  const formData = new FormData();
+  formData.append('sample_bytes', String(audioFile.size));
+  formData.append('sample', audioFile, audioFile.name || 'sample.wav');
+  return formData;
 };
 
-const buildIdentifyUrl = () => {
-  if (shouldUseViteProxyForDirectCalls()) {
-    return '/acr-proxy/v1/identify';
-  }
+const extractPrimaryMusicMatch = (payload) => payload?.metadata?.music?.[0] || null;
 
-  const normalizedHost = ACR_HOST.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  return `https://${normalizedHost}/v1/identify`;
-};
-
-const getPrimaryResult = (data) => data?.metadata?.music?.[0] || null;
-
-const parseAxiosError = (error) => {
+const normalizeAxiosError = (error) => {
   const apiMessage = error?.response?.data?.status?.msg;
   if (apiMessage) {
     return apiMessage;
   }
 
-  if (error?.response?.status === 0 || error?.message === 'Network Error') {
-    return 'Network error while contacting recognition service. In development, run `npm run dev` to use the built-in /acr-proxy, or configure VITE_ACR_PROXY_URL for your own backend proxy.';
+  if (error?.code === 'ECONNABORTED') {
+    return 'Recognition request timed out. Try a shorter, clearer 8-15 second clip.';
+  }
+
+  if (error?.message === 'Network Error') {
+    return 'Network error while contacting recognition service. In development, run `npm run dev` and use /acr-proxy, or configure VITE_ACR_PROXY_URL.';
   }
 
   return error?.message || 'Unable to identify song from audio sample.';
 };
 
-const recognizeSongViaProxy = async ({ file, sampleBuffer }) => {
-  const formData = new FormData();
-  formData.append('sample_bytes', sampleBuffer.byteLength.toString());
-  formData.append('sample', file, file.name || 'sample.mp3');
+const normalizeApiPayload = (responseData) => {
+  if (typeof responseData === 'string') {
+    try {
+      return JSON.parse(responseData);
+    } catch {
+      throw new Error('Recognition service returned an invalid response payload.');
+    }
+  }
 
-  const response = await axios.post(ACR_PROXY_URL, formData);
-  return response.data;
-};
-
-const recognizeSongDirect = async ({ file, sampleBuffer }) => {
-  validateDirectConfig();
-
-  const timestamp = Math.floor(Date.now() / 1000).toString();
-  const stringToSign = ['POST', '/v1/identify', ACR_ACCESS_KEY, 'audio', '1', timestamp].join('\n');
-  const signature = await hmacSha1Base64(stringToSign, ACR_ACCESS_SECRET);
-
-  const formData = new FormData();
-  formData.append('access_key', ACR_ACCESS_KEY);
-  formData.append('sample_bytes', sampleBuffer.byteLength.toString());
-  formData.append('sample', file, file.name || 'sample.mp3');
-  formData.append('timestamp', timestamp);
-  formData.append('signature', signature);
-  formData.append('data_type', 'audio');
-  formData.append('signature_version', '1');
-
-  const response = await axios.post(buildIdentifyUrl(), formData);
-  return response.data;
+  return responseData;
 };
 
 const recognizeSong = async (audioFile) => {
-  const audioPayload = await ensureAudioFile(audioFile);
+  ensureReadyToRecognize(audioFile);
 
   try {
-    const payload = ACR_PROXY_URL
-      ? await recognizeSongViaProxy(audioPayload)
-      : await recognizeSongDirect(audioPayload);
+    const usingProxy = Boolean(ACR_CONFIG.proxyUrl);
+    const url = getRequestUrl();
+    const formData = usingProxy ? buildProxyRequestForm(audioFile) : await buildDirectRequestForm(audioFile);
+
+    const response = await axios.post(url, formData, {
+      timeout: REQUEST_TIMEOUT_MS,
+    });
+
+    const payload = normalizeApiPayload(response.data);
 
     if (payload?.status?.code !== 0) {
       throw new Error(payload?.status?.msg || 'Unable to identify song from audio sample.');
@@ -123,10 +159,10 @@ const recognizeSong = async (audioFile) => {
 
     return {
       raw: payload,
-      result: getPrimaryResult(payload),
+      result: extractPrimaryMusicMatch(payload),
     };
   } catch (error) {
-    throw new Error(parseAxiosError(error));
+    throw new Error(normalizeAxiosError(error));
   }
 };
 
