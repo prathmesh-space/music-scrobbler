@@ -1,8 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap');
+
+:root {
+  --bg-main: #FDF6EC;
+  --card-bg: #FFFFFF;
+  --primary: #7A1E2C;
+  --primary-hover: #5E1621;
+  --text-main: #1F1F1F;
+  --text-muted: #6D6D6D;
+  --border-soft: #EEE6DA;
+}
+
+body {
+  background: var(--bg-main);
+  font-family: 'Inter', sans-serif;
+  color: var(--text-main);
+}
+
+.page-shell {
+  min-height: 100vh;
+  padding: 3rem 1.5rem;
+}
 /* Global app styles with design system */
 #root {
   min-height: 100vh;
   width: 100%;
   font-family: 'Baloo 2', sans-serif;
+  
 }
 
 /* Smooth scrolling for better UX */
