@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "backend:ingest": "node backend/cli.js ingest",
     "backend:build": "node backend/cli.js build",
-    "acr:proxy": "node backend/recognition-server.js"
+    "acr:proxy": "node backend/server.js"
   },
   "dependencies": {
     "axios": "^1.13.5",

@@ -6,6 +6,6 @@ export { default as Friends } from './Friends';
 export { default as Home } from './Home';
 export { default as ListeningGoals } from './ListeningGoals';
 export { default as Profile } from './Profile';
-export { default as Recognition } from './Recognition';
+export { default as Recognition } from './SongRecognition';
 export { default as Recommendations } from './Recommendations';
 export { default as Statistics } from './Statistics';

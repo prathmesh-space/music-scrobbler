@@ -17,7 +17,7 @@ const upload = multer({
 
 // Enable CORS
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000'
+  origin: process.env.FRONTEND_URL?.split(',').map((origin) => origin.trim()) || ['http://localhost:3000', 'http://localhost:5173']
 }));
 
 app.use(express.json());
@@ -122,7 +122,7 @@ app.post('/api/recognize', upload.single('audio'), async (req, res) => {
   console.log(`📁 File info: ${req.file.originalname}, ${req.file.size} bytes`);
 
   try {
-    const timestamp = Date.now();
+    const timestamp = Math.floor(Date.now() / 1000);
     const signature = generateSignature(
       'POST',
       '/v1/identify',

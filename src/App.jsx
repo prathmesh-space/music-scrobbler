@@ -11,10 +11,10 @@ import {
   Home,
   ListeningGoals,
   Profile,
-  Recognition,
   Recommendations,
   Statistics,
 } from './pages';
+import SongRecognition from './pages/SongRecognition';
 import { authenticatedRoutes } from './config/routes';
 
 import { ArrowUpCircle, Loader2, Sparkles } from 'lucide-react';
@@ -41,9 +41,9 @@ const pageComponents = {
   Friends,
   Profile,
   Recommendations,
-  Recognition,
   ListeningGoals,
   DiscoveryLab,
+  Recognition: SongRecognition,
 };
 
 function App() {
