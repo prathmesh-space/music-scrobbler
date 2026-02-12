@@ -1,13 +1,17 @@
 // Backend Server for ACRCloud Song Recognition
 // This should be run separately from your frontend
 
-const express = require('express');
-const multer = require('multer');
-const cors = require('cors');
-const crypto = require('crypto');
-const axios = require('axios');
-const FormData = require('form-data');
-require('dotenv').config();
+import express from 'express';
+import multer from 'multer';
+import cors from 'cors';
+import crypto from 'node:crypto';
+import axios from 'axios';
+import FormData from 'form-data';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+
 
 const app = express();
 const upload = multer({ 
