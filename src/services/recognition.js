@@ -4,6 +4,7 @@ const ACR_CONFIG = {
   accessKey: (import.meta.env.VITE_ACR_ACCESS_KEY || '').trim(),
   accessSecret: (import.meta.env.VITE_ACR_ACCESS_SECRET || '').trim(),
   host: (import.meta.env.VITE_ACR_HOST || '').trim(),
+  scheme: (import.meta.env.VITE_ACR_SCHEME || 'http').trim().toLowerCase(),
   proxyUrl: (import.meta.env.VITE_ACR_PROXY_URL || '').trim(),
   isDev: Boolean(import.meta.env.DEV),
 };
@@ -18,7 +19,9 @@ const canUseDevProxy = () => ACR_CONFIG.isDev && !ACR_CONFIG.proxyUrl && Boolean
 
 const normalizeHost = (host) => host.replace(/^https?:\/\//, '').replace(/\/+$/, '');
 
-const getDirectIdentifyUrl = () => `https://${normalizeHost(ACR_CONFIG.host)}${ACR_PATH}`;
+const normalizeScheme = (scheme) => (scheme === 'https' ? 'https' : 'http');
+
+const getDirectIdentifyUrl = () => `${normalizeScheme(ACR_CONFIG.scheme)}://${normalizeHost(ACR_CONFIG.host)}${ACR_PATH}`;
 
 const getRequestUrl = () => {
   if (ACR_CONFIG.proxyUrl) {

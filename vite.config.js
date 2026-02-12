@@ -5,16 +5,19 @@ import react from '@vitejs/plugin-react'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const acrHost = env.VITE_ACR_HOST
+  const acrScheme = (env.VITE_ACR_SCHEME || 'http').toLowerCase() === 'https' ? 'https' : 'http'
+
+  const normalizedAcrHost = acrHost?.replace(/^https?:\/\//, '').replace(/\/$/, '')
 
   return {
     plugins: [react()],
     server: {
-      proxy: acrHost
+      proxy: normalizedAcrHost
         ? {
             '/acr-proxy': {
-              target: `https://${acrHost.replace(/^https?:\/\//, '').replace(/\/$/, '')}`,
+              target: `${acrScheme}://${normalizedAcrHost}`,
               changeOrigin: true,
-              secure: true,
+              secure: acrScheme === 'https',
               rewrite: (path) => path.replace(/^\/acr-proxy/, ''),
             },
           }
