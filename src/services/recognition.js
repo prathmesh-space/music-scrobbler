@@ -16,8 +16,6 @@ const REQUEST_TIMEOUT_MS = 20000;
 const encoder = new TextEncoder();
 
 const canUseDevProxy = () => ACR_CONFIG.isDev && !ACR_CONFIG.proxyUrl && Boolean(ACR_CONFIG.host);
-const hasAcrCredentials = () => Boolean(ACR_CONFIG.accessKey && ACR_CONFIG.accessSecret);
-
 const normalizeHost = (host) => host.replace(/^https?:\/\//, '').replace(/\/+$/, '');
 
 const normalizeScheme = (scheme) => (scheme === 'https' ? 'https' : 'http');
@@ -129,7 +127,7 @@ const normalizeAxiosError = (error) => {
   }
 
   if (error?.message === 'Network Error') {
-    return 'Network error while contacting recognition service. In development, run `npm run dev` and use /acr-proxy, or configure VITE_ACR_PROXY_URL.';
+    return 'Network error while contacting recognition service. In development, run `npm run dev` and use /acr-proxy, or run the local ACR proxy server and set VITE_ACR_PROXY_URL.';
   }
 
   return error?.message || 'Unable to identify song from audio sample.';
@@ -151,7 +149,7 @@ const recognizeSong = async (audioFile) => {
   ensureReadyToRecognize(audioFile);
 
   try {
-    const usingUnsignedProxy = Boolean(ACR_CONFIG.proxyUrl) && !hasAcrCredentials();
+    const usingProxy = Boolean(ACR_CONFIG.proxyUrl) || canUseDevProxy();
     const url = getRequestUrl();
     const formData = usingUnsignedProxy ? buildProxyRequestForm(audioFile) : await buildSignedRequestForm(audioFile);
 
