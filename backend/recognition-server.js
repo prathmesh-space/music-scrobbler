@@ -37,6 +37,93 @@ const getCorsHeaders = () => ({
   'access-control-allow-headers': 'content-type,x-sample-bytes,x-sample-filename',
 });
 
+const parseMultipartPayload = (buffer, contentType) => {
+  const boundaryMatch = contentType.match(/boundary=([^;]+)/i);
+  if (!boundaryMatch) {
+    throw new Error('Multipart payload is missing boundary.');
+  }
+
+  const boundary = boundaryMatch[1].replace(/^"|"$/g, '');
+  const boundaryBuffer = Buffer.from(`--${boundary}`);
+  const parts = [];
+  let cursor = 0;
+
+  while (cursor < buffer.length) {
+    const start = buffer.indexOf(boundaryBuffer, cursor);
+    if (start < 0) {
+      break;
+    }
+
+    const partStart = start + boundaryBuffer.length;
+    if (buffer[partStart] === 45 && buffer[partStart + 1] === 45) {
+      break;
+    }
+
+    let contentStart = partStart;
+    if (buffer[contentStart] === 13 && buffer[contentStart + 1] === 10) {
+      contentStart += 2;
+    }
+
+    const nextBoundary = buffer.indexOf(boundaryBuffer, contentStart);
+    if (nextBoundary < 0) {
+      break;
+    }
+
+    let part = buffer.slice(contentStart, nextBoundary);
+    if (part[part.length - 2] === 13 && part[part.length - 1] === 10) {
+      part = part.slice(0, -2);
+    }
+
+    parts.push(part);
+    cursor = nextBoundary;
+  }
+
+  let sampleBuffer = null;
+  let sampleBytes = null;
+  let filename = 'sample.wav';
+  let mimeType = 'application/octet-stream';
+
+  for (const part of parts) {
+    const separator = part.indexOf(Buffer.from('\r\n\r\n'));
+    if (separator < 0) {
+      continue;
+    }
+
+    const headersRaw = part.slice(0, separator).toString('utf8');
+    const value = part.slice(separator + 4);
+
+    const nameMatch = headersRaw.match(/name="([^"]+)"/i);
+    const fieldName = nameMatch?.[1];
+
+    if (fieldName === 'sample') {
+      sampleBuffer = value;
+      const filenameMatch = headersRaw.match(/filename="([^"]+)"/i);
+      filename = filenameMatch?.[1] || filename;
+
+      const mimeMatch = headersRaw.match(/content-type:\s*([^\r\n]+)/i);
+      mimeType = mimeMatch?.[1]?.trim() || mimeType;
+    }
+
+    if (fieldName === 'sample_bytes') {
+      const parsed = Number.parseInt(value.toString('utf8').trim(), 10);
+      if (Number.isFinite(parsed)) {
+        sampleBytes = parsed;
+      }
+    }
+  }
+
+  if (!sampleBuffer || sampleBuffer.length === 0) {
+    throw new Error('Multipart payload did not include a valid sample file.');
+  }
+
+  return {
+    sampleBuffer,
+    sampleBytes: sampleBytes ?? sampleBuffer.length,
+    filename,
+    mimeType,
+  };
+};
+
 const normalizeAcrPayload = async (request) => {
   const contentType = request.headers['content-type'] || '';
 
@@ -60,6 +147,11 @@ const normalizeAcrPayload = async (request) => {
       filename: request.headers['x-sample-filename'] || 'sample.wav',
       mimeType: contentType,
     };
+  }
+
+  if (contentType.includes('multipart/form-data')) {
+    const body = await readBody(request);
+    return parseMultipartPayload(body, contentType);
   }
 
   throw new Error(`Unsupported content type: ${contentType || 'none'}`);

@@ -15,6 +15,7 @@ const DATA_TYPE = 'audio';
 const REQUEST_TIMEOUT_MS = 20000;
 const encoder = new TextEncoder();
 
+const hasAcrCredentials = () => Boolean(ACR_CONFIG.accessKey && ACR_CONFIG.accessSecret);
 const canUseDevProxy = () => ACR_CONFIG.isDev && !ACR_CONFIG.proxyUrl && Boolean(ACR_CONFIG.host);
 const normalizeHost = (host) => host.replace(/^https?:\/\//, '').replace(/\/+$/, '');
 
@@ -107,11 +108,18 @@ const buildSignedRequestForm = async (audioFile) => {
   return formData;
 };
 
-const buildProxyRequestForm = (audioFile) => {
-  const formData = new FormData();
-  formData.append('sample_bytes', String(audioFile.size));
-  formData.append('sample', audioFile, audioFile.name || 'sample.wav');
-  return formData;
+const buildProxyRequestBody = async (audioFile) => {
+  const arrayBuffer = await audioFile.arrayBuffer();
+  const mimeType = audioFile.type || 'application/octet-stream';
+
+  return {
+    body: arrayBuffer,
+    headers: {
+      'Content-Type': mimeType,
+      'x-sample-bytes': String(audioFile.size),
+      'x-sample-filename': audioFile.name || 'sample.wav',
+    },
+  };
 };
 
 const extractPrimaryMusicMatch = (payload) => payload?.metadata?.music?.[0] || null;
@@ -149,12 +157,18 @@ const recognizeSong = async (audioFile) => {
   ensureReadyToRecognize(audioFile);
 
   try {
-    const usingProxy = Boolean(ACR_CONFIG.proxyUrl) || canUseDevProxy();
+    const usingProxy = Boolean(ACR_CONFIG.proxyUrl);
     const url = getRequestUrl();
-    const formData = usingUnsignedProxy ? buildProxyRequestForm(audioFile) : await buildSignedRequestForm(audioFile);
+    const request = usingProxy
+      ? await buildProxyRequestBody(audioFile)
+      : {
+          body: await buildSignedRequestForm(audioFile),
+          headers: {},
+        };
 
-    const response = await axios.post(url, formData, {
+    const response = await axios.post(url, request.body, {
       timeout: REQUEST_TIMEOUT_MS,
+      headers: request.headers,
     });
 
     const payload = normalizeApiPayload(response.data);
