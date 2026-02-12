@@ -1,24 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Check, Command, LogOut, Menu, Search, Settings } from 'lucide-react';
+import { navigationItems } from '../../config/routes';
 
 const themeOptions = [
   { value: 'dark', label: 'Dark' },
   { value: 'light', label: 'Light' },
+  { value: 'midnight', label: 'Midnight' },
+  { value: 'sunset', label: 'Sunset' },
   { value: 'system', label: 'System' },
-];
-
-const navigationItems = [
-  { path: '/', label: 'Home', mobileLabel: 'Home', description: 'Recent listening activity and now playing.' },
-  { path: '/charts', label: 'Charts', mobileLabel: 'Charts', description: 'Your top artists, albums, and tracks.' },
-  { path: '/statistics', label: 'Statistics', mobileLabel: 'Stats', description: 'Listening trends and activity over time.' },
-  { path: '/collage', label: 'Collage', mobileLabel: 'Collage', description: 'Generate and export album or artist collages.' },
-  { path: '/friends', label: 'Friends', mobileLabel: 'Friends', description: 'Compare your listening with Last.fm friends.' },
-  { path: '/profile', label: 'Profile', mobileLabel: 'Profile', description: 'Profile insights, badges, and account view.' },
-  { path: '/recommendations', label: 'Recommendations', mobileLabel: 'Recs', description: 'Suggested songs and artists based on your taste.' },
-  { path: '/recognition', label: 'Recognition', mobileLabel: 'Recognize', description: 'Identify tracks from audio snippets.' },
-  { path: '/goals', label: 'Goals', mobileLabel: 'Goals', description: 'Track listening goals and streaks.' },
-  { path: '/discovery', label: 'Discovery', mobileLabel: 'Discover', description: 'Explore related artists and deep cuts.' },
 ];
 
 const navLinkClasses = (isLight) => ({ isActive }) =>
@@ -41,7 +31,7 @@ const getStoredRecentRoutes = () => {
   }
 };
 
-const Navbar = ({ username, onLogout, theme = 'dark', activeTheme = 'dark', onThemeChange }) => {
+const Navbar = ({ username, onLogout, theme = 'dark', activeTheme = 'dark', onThemeChange, reducedMotion = false, onReducedMotionChange }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
@@ -53,7 +43,7 @@ const Navbar = ({ username, onLogout, theme = 'dark', activeTheme = 'dark', onTh
   const location = useLocation();
   const navigate = useNavigate();
 
-  const isLight = activeTheme === 'light';
+  const isLight = activeTheme === 'light' || activeTheme === 'sunset';
 
   const container = isLight
     ? 'border-gray-200 bg-white/90 backdrop-blur'
@@ -97,6 +87,20 @@ const Navbar = ({ username, onLogout, theme = 'dark', activeTheme = 'dark', onTh
         setCommandOpen((previous) => !previous);
       }
 
+      if (event.key === '[') {
+        window.dispatchEvent(new CustomEvent('music-scrobbler:range', { detail: -1 }));
+      }
+
+      if (event.key === ']') {
+        window.dispatchEvent(new CustomEvent('music-scrobbler:range', { detail: 1 }));
+      }
+
+      if (event.shiftKey && event.key.toLowerCase() === 't') {
+        const order = ['dark', 'midnight', 'sunset', 'light', 'system'];
+        const idx = order.indexOf(theme);
+        onThemeChange?.(order[(idx + 1) % order.length]);
+      }
+
       if (event.key === 'Escape') {
         setCommandOpen(false);
         setQuery('');
@@ -105,7 +109,7 @@ const Navbar = ({ username, onLogout, theme = 'dark', activeTheme = 'dark', onTh
 
     window.addEventListener('keydown', onKeydown);
     return () => window.removeEventListener('keydown', onKeydown);
-  }, []);
+  }, [onThemeChange, theme]);
 
   useEffect(() => {
     const matchedRoute = navigationItems.find((item) => item.path === location.pathname);
@@ -179,6 +183,7 @@ const Navbar = ({ username, onLogout, theme = 'dark', activeTheme = 'dark', onTh
           <div className="flex items-center space-x-3">
             <button
               type="button"
+              aria-label="Open mobile menu"
               onClick={() => setMobileMenuOpen((v) => !v)}
               className={`inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition lg:hidden ${buttonBase}`}
             >
@@ -214,7 +219,7 @@ const Navbar = ({ username, onLogout, theme = 'dark', activeTheme = 'dark', onTh
 
               {settingsOpen && (
                 <div
-                  className={`absolute right-0 top-12 z-50 w-44 rounded-md border p-2 shadow-lg ${menuPanel}`}
+                  className={`absolute right-0 top-12 z-50 w-56 rounded-md border p-2 shadow-lg ${menuPanel}`}
                 >
                   <p className={`px-2 pb-1 text-xs font-semibold uppercase ${userText}`}>
                     Theme
@@ -226,6 +231,7 @@ const Navbar = ({ username, onLogout, theme = 'dark', activeTheme = 'dark', onTh
                     return (
                       <button
                         key={value}
+                        type="button"
                         onClick={() => {
                           onThemeChange?.(value);
                           setSettingsOpen(false);
@@ -237,6 +243,15 @@ const Navbar = ({ username, onLogout, theme = 'dark', activeTheme = 'dark', onTh
                       </button>
                     );
                   })}
+
+                  <button
+                    type="button"
+                    onClick={() => onReducedMotionChange?.(!reducedMotion)}
+                    className={menuItem(false)}
+                  >
+                    Reduced motion
+                    {reducedMotion ? <Check className="h-4 w-4" /> : null}
+                  </button>
                 </div>
               )}
             </div>
@@ -286,6 +301,8 @@ const Navbar = ({ username, onLogout, theme = 'dark', activeTheme = 'dark', onTh
                 className={`w-full bg-transparent text-sm outline-none ${isLight ? 'text-gray-900 placeholder:text-gray-400' : 'text-gray-100 placeholder:text-gray-500'}`}
               />
             </div>
+
+            <p className={`mb-3 text-xs ${userText}`}>Shortcuts: Cmd/Ctrl+K command palette • Shift+T cycle themes • [ / ] switch range</p>
 
             {!query && quickSuggestions.length > 0 ? (
               <div className="mb-4">

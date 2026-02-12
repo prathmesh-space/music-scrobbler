@@ -69,3 +69,44 @@ html[data-theme='light'] .text-gray-400,
 html[data-theme='light'] .text-white {
   color: #111827 !important;
 }
+
+:focus-visible {
+  outline: 2px solid #a855f7;
+  outline-offset: 2px;
+}
+
+html[data-motion='reduced'] *,
+html[data-motion='reduced'] *::before,
+html[data-motion='reduced'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+html[data-theme='midnight'] body {
+  background: radial-gradient(circle at top, rgba(79, 70, 229, 0.25), transparent 42%), #030712;
+  color: #e5e7eb;
+}
+
+html[data-theme='sunset'] body {
+  background: radial-gradient(circle at top, rgba(251, 113, 133, 0.22), transparent 40%), #fff7ed;
+  color: #1f2937;
+}
+
+html[data-theme='sunset'] .bg-gray-900 {
+  background-color: #fff7ed !important;
+}
+
+html[data-theme='sunset'] .bg-gray-800,
+html[data-theme='sunset'] .bg-gray-700 {
+  background-color: #ffffff !important;
+}
+
+html[data-theme='sunset'] .text-white,
+html[data-theme='sunset'] .text-gray-100,
+html[data-theme='sunset'] .text-gray-200,
+html[data-theme='sunset'] .text-gray-300,
+html[data-theme='sunset'] .text-gray-400 {
+  color: #1f2937 !important;
+}

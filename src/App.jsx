@@ -2,36 +2,65 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import useAuth from './hooks/useAuth';
 import LoginButton from './components/Auth/LoginButton';
 import { Navbar } from './components/Common/Navbar';
-import Callback from './pages/Callback';
-import Home from './pages/Home';
-import Charts from './pages/Charts';
-import Statistics from './pages/Statistics';
-import Collage from './pages/Collage';
-import Friends from './pages/Friends';
-import Profile from './pages/Profile';
-import Recommendations from './pages/Recommendations';
-import Recognition from './pages/Recognition';
-import ListeningGoals from './pages/ListeningGoals';
-import DiscoveryLab from './pages/DiscoveryLab';
+import {
+  Callback,
+  Charts,
+  Collage,
+  DiscoveryLab,
+  Friends,
+  Home,
+  ListeningGoals,
+  Profile,
+  Recognition,
+  Recommendations,
+  Statistics,
+} from './pages';
+import { authenticatedRoutes } from './config/routes';
 
-import { ArrowUpCircle, Loader2 } from 'lucide-react';
+import { ArrowUpCircle, Loader2, Sparkles } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 const THEME_STORAGE_KEY = 'music-scrobbler-theme';
+const REDUCED_MOTION_KEY = 'music-scrobbler-reduced-motion';
+const ONBOARDING_KEY = 'music-scrobbler-onboarding-completed';
 
 const getSystemTheme = () =>
   window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
-const resolveTheme = (theme) => (theme === 'system' ? getSystemTheme() : theme);
+const resolveTheme = (theme) => {
+  if (theme === 'system') return getSystemTheme();
+  if (theme === 'sunset' || theme === 'midnight') return theme;
+  return theme === 'light' ? 'light' : 'dark';
+};
+
+const pageComponents = {
+  Home,
+  Charts,
+  Statistics,
+  Collage,
+  Friends,
+  Profile,
+  Recommendations,
+  Recognition,
+  ListeningGoals,
+  DiscoveryLab,
+};
 
 function App() {
   const { isLoggedIn, username, loading, login, logout } = useAuth();
   const [theme, setTheme] = useState(() => localStorage.getItem(THEME_STORAGE_KEY) || 'dark');
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(() => localStorage.getItem(REDUCED_MOTION_KEY) === 'true');
+  const [showOnboarding, setShowOnboarding] = useState(() => localStorage.getItem(ONBOARDING_KEY) !== 'true');
 
   useEffect(() => {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem(REDUCED_MOTION_KEY, String(reducedMotion));
+    document.documentElement.dataset.motion = reducedMotion ? 'reduced' : 'full';
+  }, [reducedMotion]);
 
   useEffect(() => {
     if (theme !== 'system') {
@@ -63,7 +92,10 @@ function App() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const appThemeClass = activeTheme === 'light' ? 'bg-gray-100 text-gray-900' : 'bg-gray-900 text-white';
+  const appThemeClass =
+    activeTheme === 'light'
+      ? 'bg-gray-100 text-gray-900'
+      : 'bg-gray-900 text-white';
 
   if (loading) {
     return (
@@ -77,24 +109,56 @@ function App() {
     <Router>
       <div className={`min-h-screen transition-colors ${appThemeClass}`}>
         {isLoggedIn && (
-          <Navbar username={username} onLogout={logout} theme={theme} onThemeChange={setTheme} activeTheme={activeTheme} />
+          <Navbar
+            username={username}
+            onLogout={logout}
+            theme={theme}
+            onThemeChange={setTheme}
+            activeTheme={activeTheme}
+            reducedMotion={reducedMotion}
+            onReducedMotionChange={setReducedMotion}
+          />
         )}
+
+        {isLoggedIn && showOnboarding ? (
+          <div className="fixed inset-0 z-50 bg-black/60 px-4 py-10 backdrop-blur-sm">
+            <div className="mx-auto max-w-2xl rounded-xl border border-purple-500/40 bg-gray-900 p-6 text-white">
+              <h2 className="mb-2 flex items-center gap-2 text-2xl font-bold"><Sparkles className="h-5 w-5 text-purple-300" /> Welcome to Music Scrobbler</h2>
+              <ul className="mb-6 list-disc space-y-2 pl-5 text-sm text-gray-300">
+                <li>Use <strong>Cmd/Ctrl+K</strong> to open the command palette and quickly jump pages.</li>
+                <li>Try the new <strong>Dashboard</strong> page to customize your cards and layout.</li>
+                <li>Visit <strong>Goals</strong> for streak milestones and celebration badges.</li>
+              </ul>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowOnboarding(false);
+                  localStorage.setItem(ONBOARDING_KEY, 'true');
+                }}
+                className="rounded-md bg-purple-600 px-4 py-2 font-medium hover:bg-purple-500"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         <Routes>
           <Route path="/callback" element={<Callback />} />
 
           {isLoggedIn ? (
             <>
-              <Route path="/" element={<Home username={username} />} />
-              <Route path="/charts" element={<Charts username={username} />} />
-              <Route path="/statistics" element={<Statistics username={username} />} />
-              <Route path="/collage" element={<Collage username={username} />} />
-              <Route path="/friends" element={<Friends username={username} />} />
-              <Route path="/profile" element={<Profile username={username} />} />
-              <Route path="/recommendations" element={<Recommendations username={username} />} />
-              <Route path="/recognition" element={<Recognition />} />
-              <Route path="/goals" element={<ListeningGoals username={username} />} />
-              <Route path="/discovery" element={<DiscoveryLab username={username} />} />
+              {authenticatedRoutes.map(({ path, pageKey, withUsername }) => {
+                const RouteComponent = pageComponents[pageKey];
+
+                return (
+                  <Route
+                    key={path}
+                    path={path}
+                    element={withUsername ? <RouteComponent username={username} /> : <RouteComponent />}
+                  />
+                );
+              })}
               <Route path="*" element={<Navigate to="/" />} />
             </>
           ) : (
@@ -108,6 +172,7 @@ function App() {
         {isLoggedIn && showBackToTop ? (
           <button
             type="button"
+            aria-label="Scroll back to top"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="fixed bottom-6 right-6 z-30 inline-flex items-center gap-2 rounded-full border border-purple-500 bg-purple-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition hover:bg-purple-500"
           >
