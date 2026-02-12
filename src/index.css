@@ -94,7 +94,7 @@ html[data-theme='light'] .text-white {
 .page-shell {
   min-height: 100vh;
   padding: 2rem 1rem;
-  background-color: rgb(17 24 39);
+  background-color: transparent;
 }
 
 .page-shell--center {
@@ -104,7 +104,7 @@ html[data-theme='light'] .text-white {
 }
 
 .page-shell--text {
-  color: rgb(255 255 255);
+  color: rgb(31 41 55);
 }
 
 .page-container {
