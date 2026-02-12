@@ -143,7 +143,7 @@ export default function Charts({ username }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 py-8 px-4">
+    <div className="page-shell">
       <div className="max-w-6xl mx-auto">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-4xl font-bold text-white">Top Charts</h1>

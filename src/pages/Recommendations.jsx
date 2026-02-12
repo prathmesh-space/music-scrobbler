@@ -301,8 +301,8 @@ export default function Recommendations({ username }) {
   }, [discoveryLevel, topTasteArtists]);
 
   return (
-    <div className="min-h-screen bg-gray-900 px-4 py-8">
-      <div className="mx-auto max-w-6xl space-y-6">
+    <div className="page-shell">
+      <div className="page-container">
         <section className="rounded-xl border border-gray-700 bg-gradient-to-r from-gray-800 to-gray-900 p-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>

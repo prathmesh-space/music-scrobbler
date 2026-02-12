@@ -102,14 +102,14 @@ const Friends = ({ username }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="page-shell page-shell--center">
         <Loader2 className="w-12 h-12 text-purple-400 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 py-8 px-4">
+    <div className="page-shell">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

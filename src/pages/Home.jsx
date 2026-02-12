@@ -139,10 +139,10 @@ const Home = ({ username }) => {
     setJournalNote('');
   };
 
-  if (loading) return <div className="min-h-screen bg-gray-900 flex items-center justify-center"><Loader2 className="w-12 h-12 text-purple-400 animate-spin" /></div>;
+  if (loading) return <div className="page-shell page-shell--center"><Loader2 className="w-12 h-12 text-purple-400 animate-spin" /></div>;
 
   return (
-    <div className="min-h-screen bg-gray-900 py-8 px-4">
+    <div className="page-shell">
       <div className="max-w-6xl mx-auto">
         <div className="bg-gray-800 rounded-lg p-6 mb-8 border border-gray-700">
           <div className="flex items-center space-x-4 mb-6">

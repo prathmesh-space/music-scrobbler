@@ -238,14 +238,14 @@ const Statistics = ({ username }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="page-shell page-shell--center">
         <Loader2 className="w-12 h-12 text-purple-400 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 py-8 px-4">
+    <div className="page-shell">
       <div className="max-w-7xl mx-auto space-y-8">
         <section className="rounded-xl border border-gray-700 bg-gray-800 p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

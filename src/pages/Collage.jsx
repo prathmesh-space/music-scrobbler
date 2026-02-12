@@ -153,8 +153,8 @@ const Collage = ({ username }) => {
   const selectedTypeLabel = collageTypes.find((type) => type.value === collageType)?.label || 'Albums';
 
   return (
-    <div className="min-h-screen bg-gray-900 px-4 py-8">
-      <div className="mx-auto max-w-6xl">
+    <div className="page-shell">
+      <div className="page-container page-container--compact">
         <h1 className="mb-8 text-4xl font-bold text-white">Music Collage Generator</h1>
 
         <div className="mb-8 rounded-lg border border-gray-700 bg-gray-800 p-6">

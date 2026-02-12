@@ -75,6 +75,39 @@ html[data-theme='light'] .text-white {
   outline-offset: 2px;
 }
 
+.page-shell {
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  background-color: rgb(17 24 39);
+}
+
+.page-shell--center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-shell--text {
+  color: rgb(255 255 255);
+}
+
+.page-container {
+  margin: 0 auto;
+  max-width: 72rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.page-container--compact {
+  gap: 2rem;
+}
+
+html[data-theme='light'] .page-shell,
+html[data-theme='sunset'] .page-shell {
+  background-color: transparent;
+}
+
 html[data-motion='reduced'] *,
 html[data-motion='reduced'] *::before,
 html[data-motion='reduced'] *::after {

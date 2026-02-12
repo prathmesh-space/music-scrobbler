@@ -90,15 +90,15 @@ const DiscoveryLab = ({ username }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+      <div className="page-shell page-shell--center page-shell--text">
         <Loader2 className="h-10 w-10 animate-spin text-purple-400" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 px-4 py-8 text-white">
-      <div className="mx-auto max-w-6xl space-y-6">
+    <div className="page-shell page-shell--text">
+      <div className="page-container">
         <section className="rounded-xl border border-gray-700 bg-gray-800 p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
