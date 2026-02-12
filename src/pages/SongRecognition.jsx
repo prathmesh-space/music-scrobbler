@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
-import WaveformVisualizer from './WaveformVisualizer';
-import ResultCard from './ResultCard';
-import './SongRecognition.css';
+import WaveformVisualizer from '../components/Recognition/WaveformVisualizer';
+import ResultCard from '../components/Recognition/ResultCard';
+import { recognizeSong as identifySong } from '../services/recognition';
+import '../components/Recognition/SongRecognition.css';
 
 // Simple audio recorder class
 class AudioRecorder {
@@ -137,25 +138,19 @@ export default function SongRecognition({ onResult }) {
 
   const recognizeSong = async (audioBlob) => {
     try {
-      const formData = new FormData();
-      formData.append('audio', audioBlob);
-      
-      // Call your backend API
-      const response = await fetch('/api/recognize', {
-        method: 'POST',
-        body: formData
+      const audioFile = new File([audioBlob], 'recording.wav', {
+        type: audioBlob.type || 'audio/wav',
       });
-      
-      const data = await response.json();
-      setResult(data);
+      const data = await identifySong(audioFile);
+      setResult(data.result || data.raw || null);
       setIsProcessing(false);
       
       // Call optional callback with result
       if (onResult) {
         onResult(data);
       }
-    } catch (error) {
-      setError('Recognition failed');
+    } catch (recognitionError) {
+      setError(recognitionError.message || 'Recognition failed');
       setIsProcessing(false);
     }
   };

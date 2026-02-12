@@ -25,11 +25,12 @@ const getDirectIdentifyUrl = () => `${normalizeScheme(ACR_CONFIG.scheme)}://${no
 
 const getRequestUrl = () => {
   if (ACR_CONFIG.proxyUrl) {
-    if (ACR_CONFIG.proxyUrl.endsWith(ACR_PATH)) {
-      return ACR_CONFIG.proxyUrl;
+    const normalizedProxyUrl = ACR_CONFIG.proxyUrl.replace(/\/+$/, '');
+    if (normalizedProxyUrl.endsWith(ACR_PATH) || normalizedProxyUrl.endsWith('/acr/recognize')) {
+      return normalizedProxyUrl;
     }
 
-    return `${ACR_CONFIG.proxyUrl.replace(/\/+$/, '')}${ACR_PATH}`;
+    return `${normalizedProxyUrl}${ACR_PATH}`;
   }
 
   if (canUseDevProxy()) {

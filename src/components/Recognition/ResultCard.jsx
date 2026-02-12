@@ -1,5 +1,22 @@
 import { useEffect, useState } from 'react';
 
+const formatArtists = (artists) => {
+  if (!artists) return '';
+  if (typeof artists === 'string') return artists;
+  if (!Array.isArray(artists)) return '';
+
+  return artists
+    .map((artist) => (typeof artist === 'string' ? artist : artist?.name))
+    .filter(Boolean)
+    .join(', ');
+};
+
+const getSpotifyTrackId = (result) =>
+  result?.external_ids?.spotify?.track?.id || result?.externalIds?.spotify?.track?.id;
+
+const getYoutubeVideoId = (result) =>
+  result?.external_ids?.youtube?.vid || result?.externalIds?.youtube?.vid;
+
 export default function ResultCard({ result }) {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -7,14 +24,20 @@ export default function ResultCard({ result }) {
     setTimeout(() => setIsVisible(true), 100);
   }, []);
 
-  if (!result || !result.success) {
+  if (!result) {
     return (
       <div className="result-card error">
         <div className="error-icon">⚠</div>
-        <p>{result?.message || 'No song detected'}</p>
+        <p>No song detected</p>
       </div>
     );
   }
+
+  const artists = formatArtists(result.artists);
+  const album = result.album?.name || result.album;
+  const score = result.score ?? result.confidence;
+  const spotifyTrackId = getSpotifyTrackId(result);
+  const youtubeVideoId = getYoutubeVideoId(result);
 
   return (
     <div className={`result-card success ${isVisible ? 'visible' : ''}`}>
@@ -23,18 +46,18 @@ export default function ResultCard({ result }) {
           <div className="vinyl-spin"></div>
         </div>
         <div className="confidence-badge">
-          {Math.round(result.score)}% Match
+          {Math.round(score || 0)}% Match
         </div>
       </div>
 
       <div className="result-content">
         <h2 className="song-title">{result.title}</h2>
-        <p className="artist-name">{result.artists}</p>
+        <p className="artist-name">{artists || 'Unknown artist'}</p>
         
-        {result.album && (
+        {album && (
           <div className="album-info">
             <span className="label">Album:</span>
-            <span className="value">{result.album}</span>
+            <span className="value">{album}</span>
           </div>
         )}
 
@@ -53,11 +76,11 @@ export default function ResultCard({ result }) {
           </div>
         )}
 
-        {result.externalIds && (
+        {(result.externalIds || result.external_ids) && (
           <div className="external-links">
-            {result.externalIds.spotify && (
+            {spotifyTrackId && (
               <a 
-                href={`https://open.spotify.com/track/${result.externalIds.spotify.track.id}`}
+                href={`https://open.spotify.com/track/${spotifyTrackId}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="platform-link spotify"
@@ -65,9 +88,9 @@ export default function ResultCard({ result }) {
                 <span>🎵</span> Spotify
               </a>
             )}
-            {result.externalIds.youtube && (
+            {youtubeVideoId && (
               <a 
-                href={`https://youtube.com/watch?v=${result.externalIds.youtube.vid}`}
+                href={`https://youtube.com/watch?v=${youtubeVideoId}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="platform-link youtube"

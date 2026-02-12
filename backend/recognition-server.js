@@ -258,7 +258,11 @@ const server = createServer(async (request, response) => {
     return;
   }
 
-  if (request.method !== 'POST' || request.url !== '/acr/recognize') {
+  const isRecognitionRequest =
+    request.method === 'POST' &&
+    (request.url === '/acr/recognize' || request.url === '/v1/identify');
+
+  if (!isRecognitionRequest) {
     sendJson(response, 404, { error: 'Not found' });
     return;
   }
@@ -277,6 +281,6 @@ const server = createServer(async (request, response) => {
 
 server.listen(PORT, HOST, () => {
   console.log(
-    `🚀 ACR proxy listening on http://${HOST}:${PORT}/acr/recognize`
+    `🚀 ACR proxy listening on http://${HOST}:${PORT}/acr/recognize (also accepts /v1/identify)`
   );
 });
