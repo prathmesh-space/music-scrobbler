@@ -213,7 +213,7 @@ export default function SongRecognition({ onResult }) {
               className="btn-primary record-btn"
               onClick={startRecording}
             >
-              <span className="btn-icon">🎤</span>
+              <span className="btn-icon"></span>
               <span className="btn-text">Start Recording</span>
             </button>
 
@@ -222,7 +222,7 @@ export default function SongRecognition({ onResult }) {
             </div>
 
             <label className="btn-secondary upload-btn">
-              <span className="btn-icon">📁</span>
+              <span className="btn-icon"></span>
               <span className="btn-text">Upload Audio File</span>
               <input 
                 type="file" 
