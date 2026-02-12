@@ -144,12 +144,12 @@ const Home = ({ username }) => {
   return (
     <div className="page-shell">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-gray-800 rounded-lg p-6 mb-8 border border-gray-700">
+        <div className="bg-gray-800 rounded-lg p-6 mb-8 border border-teal/20 shadow-lg">
           <div className="flex items-center space-x-4 mb-6">
-            {userImage && <img src={userImage} alt={userInfo?.name || 'Profile'} className="w-20 h-20 rounded-full border-4 border-purple-400" />}
+            {userImage && <img src={userImage} alt={userInfo?.name || 'Profile'} className="w-20 h-20 rounded-full border-4 border-teal shadow-teal/50 shadow-md" />}
             <div>
-              <h1 className="text-3xl font-bold text-white">{userInfo?.realname || userInfo?.name}</h1>
-              <p className="text-gray-400">@{userInfo?.name}</p>
+              <h1 className="font-heading text-3xl font-bold text-cream">{userInfo?.realname || userInfo?.name}</h1>
+              <p className="font-body text-teal/80">@{userInfo?.name}</p>
             </div>
           </div>
 
@@ -162,9 +162,9 @@ const Home = ({ username }) => {
           </div>
         </div>
 
-        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 mb-8">
+        <div className="bg-gray-800 rounded-lg p-6 border border-coral/20 mb-8 shadow-lg">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            <h2 className="text-2xl font-bold text-white">Recent Tracks</h2>
+            <h2 className="font-heading text-2xl font-bold text-cream">Recent Tracks</h2>
             <div className="grid w-full gap-2 md:max-w-3xl md:grid-cols-2 lg:grid-cols-3">
               <label className="relative">
                 <Search className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -221,8 +221,8 @@ const Home = ({ username }) => {
           </div>
         </div>
 
-        <section className="rounded-xl border border-gray-700 bg-gray-800 p-6 text-white">
-          <h2 className="text-xl font-semibold mb-4">Session insights journal</h2>
+        <section className="rounded-xl border border-teal/20 bg-gray-800 p-6 text-white shadow-lg">
+          <h2 className="font-heading text-xl font-semibold mb-4 text-cream">Session insights journal</h2>
           <div className="grid gap-3 md:grid-cols-[180px_1fr_auto]">
             <select value={journalMood} onChange={(e) => setJournalMood(e.target.value)} className="rounded-md border border-gray-600 bg-gray-700 px-3 py-2">
               <option value="focused">Focused</option><option value="energetic">Energetic</option><option value="relaxed">Relaxed</option><option value="nostalgic">Nostalgic</option><option value="social">Social</option>
@@ -245,12 +245,12 @@ const Home = ({ username }) => {
 };
 
 const Stat = ({ label, value }) => (
-  <div className="bg-gray-700 rounded-lg p-4 border border-gray-600">
+  <div className="bg-gray-700 rounded-lg p-4 border border-teal/30 hover:border-teal/60 transition-colors shadow-md">
     <div className="flex items-center space-x-3">
-      <Music2 className="w-5 h-5 text-purple-400" />
+      <Music2 className="w-5 h-5 text-teal" />
       <div>
-        <p className="text-sm text-gray-400">{label}</p>
-        <p className="text-xl font-bold text-white">{value}</p>
+        <p className="font-body text-sm text-cream/70">{label}</p>
+        <p className="font-heading text-xl font-bold text-cream">{value}</p>
       </div>
     </div>
   </div>

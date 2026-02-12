@@ -12,12 +12,12 @@ const themeOptions = [
 ];
 
 const navLinkClasses = (isLight) => ({ isActive }) =>
-  `rounded-md px-3 py-2 text-sm font-medium transition ${
+  `font-body rounded-md px-3 py-2 text-sm font-medium transition ${
     isActive
-      ? 'bg-purple-600 text-white'
+      ? 'bg-gradient-to-r from-teal to-coral text-dark font-semibold'
       : isLight
         ? 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-        : 'text-gray-300 hover:text-white hover:bg-gray-700'
+        : 'text-cream/80 hover:text-cream hover:bg-gray-700'
   }`;
 
 const RECENT_ROUTES_KEY = 'music-scrobbler-recent-routes';
@@ -162,7 +162,7 @@ const Navbar = ({ username, onLogout, theme = 'dark', activeTheme = 'dark', onTh
       <header className={`sticky top-0 z-40 border-b transition-colors ${container}`}>
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <div className="flex items-center space-x-6">
-            <Link to="/" className={`text-lg font-semibold ${userName}`}>
+            <Link to="/" className={`font-heading text-lg font-bold ${userName} hover:text-teal transition-colors`}>
               Music Scrobbler
             </Link>
 
