@@ -4,6 +4,9 @@ import LoginButton from './components/Auth/LoginButton';
 import { Navbar } from './components/Common/Navbar';
 import {
   Callback,
+  ChartAlbums,
+  ChartArtists,
+  ChartTracks,
   Charts,
   Collage,
   DiscoveryLab,
@@ -25,6 +28,9 @@ const ONBOARDING_KEY = 'music-scrobbler-onboarding-completed';
 const pageComponents = {
   Home,
   Charts,
+  ChartArtists,
+  ChartAlbums,
+  ChartTracks,
   Statistics,
   Collage,
   Friends,

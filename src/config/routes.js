@@ -15,6 +15,7 @@ const routeDefinitions = [
     mobileLabel: 'Charts',
     description: 'Your top artists, albums, and tracks.',
   },
+  
   {
     path: '/statistics',
     pageKey: 'Statistics',

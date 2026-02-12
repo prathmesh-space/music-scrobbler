@@ -1,4 +1,7 @@
 export { default as Callback } from './Callback';
+export { default as ChartAlbums } from './ChartAlbums';
+export { default as ChartArtists } from './ChartArtists';
+export { default as ChartTracks } from './ChartTracks';
 export { default as Charts } from './Charts';
 export { default as Collage } from './Collage';
 export { default as DiscoveryLab } from './DiscoveryLab';
