@@ -1,18 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Check, Command, LogOut, Search, Settings } from 'lucide-react';
+import { Command, LogOut, Search } from 'lucide-react';
 import { navigationItems } from '../../config/routes';
 
-const themeOptions = [
-  { value: 'light', label: 'Light' },
-  { value: 'system', label: 'System' },
-];
-
 const navLinkClasses = ({ isActive }) =>
-  `font-['Krub'] rounded-full px-4 py-2 text-sm transition-all duration-200 whitespace-nowrap ${
+  `font-['Inter'] text-base tracking-wide transition-all duration-200 whitespace-nowrap px-6 py-3 rounded-full ${
     isActive
-      ? 'bg-[#FFB7C5] text-black font-semibold shadow-md'
-      : 'text-black/70 hover:bg-[#F2C7C7] hover:text-black'
+      ? 'bg-[#FDF6EC] text-black font-bold'
+      : 'text-[#FDF6EC]/85 hover:font-bold hover:text-[#FDF6EC]'
   }`;
 
 const RECENT_ROUTES_KEY = 'music-scrobbler-recent-routes';
@@ -26,27 +21,13 @@ const getStoredRecentRoutes = () => {
   }
 };
 
-const Navbar = ({ username, onLogout, theme = 'light', onThemeChange }) => {
-  const [settingsOpen, setSettingsOpen] = useState(false);
+const Navbar = ({ username, onLogout }) => {
   const [commandOpen, setCommandOpen] = useState(false);
   const [query, setQuery] = useState('');
-
-  const menuRef = useRef(null);
   const commandInputRef = useRef(null);
 
   const location = useLocation();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const closeOnOutsideClick = (e) => {
-      if (!menuRef.current?.contains(e.target)) {
-        setSettingsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', closeOnOutsideClick);
-    return () => document.removeEventListener('mousedown', closeOnOutsideClick);
-  }, []);
 
   useEffect(() => {
     const matchedRoute = navigationItems.find((item) => item.path === location.pathname);
@@ -89,124 +70,86 @@ const Navbar = ({ username, onLogout, theme = 'light', onThemeChange }) => {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-[#F2DADA] bg-[#F2C7C7]/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          
-          {/* Logo */}
-          <Link
-            to="/"
-            className="font-['Inter'] text-xl font-semibold tracking-tight text-black hover:text-[#FFB7C5] transition"
-          >
-            Music Scrobbler
-          </Link>
+      <header className="sticky top-0 z-50 bg-[#FDF6EC] pt-10 pb-6">
+  <div className="relative mx-auto w-[92%] max-w-6xl rounded-3xl bg-black px-16 py-8 shadow-2xl">
 
-          {/* Tabs (Always Visible) */}
-          <nav className="flex flex-1 justify-center gap-2 overflow-x-auto px-6">
-            {navigationItems.map((item, i) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={i === 0}
-                className={navLinkClasses}
-              >
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
+    {/* LEFT LINKS */}
+    <div className="flex items-center gap-10">
+      {navigationItems.slice(0, Math.ceil(navigationItems.length / 2)).map((item, i) => (
+        <NavLink
+          key={item.path}
+          to={item.path}
+          end={i === 0}
+          className={({ isActive }) =>
+            `font-['Inter'] text-lg tracking-wide transition-all duration-200 ${
+              isActive
+                ? 'text-white font-bold'
+                : 'text-white/70 hover:text-white hover:font-bold'
+            }`
+          }
+        >
+          {item.label}
+        </NavLink>
+      ))}
+    </div>
 
-          {/* Right Section */}
-          <div className="flex items-center gap-3">
+    {/* CENTER LOGO */}
+    <Link
+      to="/"
+      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-['Inter'] text-3xl font-semibold tracking-wide text-white hover:font-bold transition"
+    >
+      Music Scrobbler
+    </Link>
 
-            <button
-              type="button"
-              onClick={() => setCommandOpen(true)}
-              className="inline-flex items-center gap-2 rounded-full border border-[#F2DADA] px-4 py-2 text-sm font-['Krub'] hover:bg-[#FFB7C5] transition"
-            >
-              <Search className="h-4 w-4" />
-              Quick jump
-              <span className="rounded border border-[#F2DADA] px-2 py-0.5 text-xs">
-                <Command className="h-3 w-3 inline" />K
-              </span>
-            </button>
+    {/* RIGHT LINKS */}
+    <div className="flex items-center justify-end gap-10">
+      {navigationItems.slice(Math.ceil(navigationItems.length / 2)).map((item) => (
+        <NavLink
+          key={item.path}
+          to={item.path}
+          className={({ isActive }) =>
+            `font-['Inter'] text-lg tracking-wide transition-all duration-200 ${
+              isActive
+                ? 'text-white font-bold'
+                : 'text-white/70 hover:text-white hover:font-bold'
+            }`
+          }
+        >
+          {item.label}
+        </NavLink>
+      ))}
+    </div>
 
-            <span className="hidden sm:block text-sm font-['Krub'] text-black/70">
-              <span className="font-semibold text-black">{username}</span>
-            </span>
+  </div>
+</header>
 
-            <div className="relative" ref={menuRef}>
-              <button
-                type="button"
-                onClick={() => setSettingsOpen((v) => !v)}
-                className="inline-flex items-center gap-2 rounded-full border border-[#F2DADA] px-4 py-2 text-sm font-['Krub'] hover:bg-[#FFB7C5] transition"
-              >
-                <Settings className="h-4 w-4" />
-              </button>
-
-              {settingsOpen && (
-                <div className="absolute right-0 top-12 z-50 w-56 rounded-2xl border border-[#F2DADA] bg-white p-3 shadow-xl">
-                  <p className="px-2 pb-2 text-xs font-semibold uppercase text-black/60">Theme</p>
-                  {themeOptions.map(({ value, label }) => {
-                    const selected = value === theme;
-                    return (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => {
-                          onThemeChange?.(value);
-                          setSettingsOpen(false);
-                        }}
-                        className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-['Krub'] transition ${
-                          selected ? 'bg-[#FFB7C5]' : 'hover:bg-[#F2C7C7]'
-                        }`}
-                      >
-                        {label}
-                        {selected && <Check className="h-4 w-4" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={onLogout}
-              className="inline-flex items-center gap-2 rounded-full border border-[#F2DADA] px-4 py-2 text-sm font-['Krub'] hover:bg-[#FFB7C5] transition"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-
-          </div>
-        </div>
-      </header>
-
-      {/* Command Modal */}
       {commandOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm px-4 py-20" onClick={closeCommand}>
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" onClick={closeCommand}>
           <div
-            className="mx-auto w-full max-w-2xl rounded-3xl border border-[#F2DADA] bg-white p-6 shadow-2xl"
+            className="mx-auto mt-40 w-full max-w-2xl rounded-3xl bg-[#FDF6EC] p-8 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="mb-4 flex items-center gap-2 rounded-full border border-[#F2DADA] px-4 py-2">
-              <Search className="h-4 w-4 text-black/50" />
+            <div className="mb-6 flex items-center gap-3 rounded-full border border-[#A31621] px-5 py-3">
+              <Search className="h-5 w-5 text-black/50" />
               <input
                 ref={commandInputRef}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search pages..."
-                className="w-full bg-transparent text-sm font-['Krub'] outline-none"
+                className="w-full bg-transparent text-base font-['Inter'] outline-none"
               />
             </div>
 
-            <div className="max-h-80 space-y-2 overflow-y-auto">
+            <div className="max-h-96 space-y-3 overflow-y-auto">
               {filteredItems.map((item) => (
                 <button
                   key={item.path}
                   type="button"
                   onClick={() => goToRoute(item.path)}
-                  className="w-full rounded-2xl border border-[#F2DADA] px-4 py-3 text-left font-['Krub'] transition hover:bg-[#F2C7C7]"
+                  className="w-full rounded-2xl border border-[#A31621] px-6 py-4 text-left font-['Inter'] text-base transition hover:bg-[#A31621] hover:text-white hover:font-bold"
                 >
-                  <p className="font-medium">{item.label}</p>
-                  <p className="text-xs text-black/60">{item.description}</p>
+                  <p>{item.label}</p>
+                  <p className="text-sm opacity-70">{item.description}</p>
                 </button>
               ))}
             </div>
