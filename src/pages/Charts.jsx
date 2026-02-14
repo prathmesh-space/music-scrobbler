@@ -164,111 +164,160 @@ export default function Charts({ username, initialTab = 'artists', lockTab = fal
   };
 
   return (
-    <div className="page-container max-w-5xl">
-      <div className="relative rounded-3xl p-8 mb-6 bg-white/90 shadow-[0_10px_40px_rgba(0,0,0,0.08)]">
-        <div className="absolute -z-10 inset-0 translate-y-3 rounded-3xl bg-white/35 blur-sm" />
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="font-heading text-4xl font-bold text-text mb-2">{title}</h1>
-            <p className="text-muted text-sm">{subtitle}</p>
-          </div>
-          <div className="flex gap-3">
-            <button type="button" onClick={exportPng} className="inline-flex items-center gap-2 rounded-full bg-accent text-text px-5 py-2.5 text-sm font-semibold shadow-md hover:-translate-y-0.5">
-              <Download className="h-4 w-4" /> Export PNG
-            </button>
-            <button type="button" onClick={exportCsv} className="inline-flex items-center gap-2 rounded-full bg-primary text-white px-5 py-2.5 text-sm font-semibold shadow-md hover:-translate-y-0.5">
-              <Download className="h-4 w-4" /> Export CSV
-            </button>
-          </div>
+    <div className="min-h-screen bg-[#F5F5F5] p-8 relative">
+      {/* Header with title and controls */}
+      <div className="flex items-start justify-between mb-12">
+        <div>
+          <h1 className="text-[120px] font-bold text-black leading-none mb-0" style={{ fontFamily: 'Inter, sans-serif' }}>
+            Top<br />Charts
+          </h1>
         </div>
-      </div>
 
-      <div className={`grid grid-cols-1 ${lockTab ? 'md:grid-cols-1' : 'md:grid-cols-2'} gap-4 mb-6`}>
-        {!lockTab && (
-          <div className="rounded-2xl p-5 bg-white/85 shadow-[0_8px_25px_rgba(0,0,0,0.08)]">
-            <label className="text-muted text-xs font-semibold mb-3 block uppercase tracking-wide">Category</label>
-            <div className="flex gap-2">
+        <div className="flex flex-col gap-3 pt-2">
+          {!lockTab && (
+            <>
               {['artists', 'albums', 'tracks'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                  className={`px-8 py-3 rounded-full text-lg transition-all ${
                     activeTab === tab
-                      ? 'bg-primary text-white shadow-md'
-                      : 'bg-border/60 text-muted hover:bg-primary/10 hover:text-text'
+                      ? 'bg-gray-200 text-black shadow-sm'
+                      : 'bg-white text-black border-2 border-gray-200 hover:bg-gray-50'
                   }`}
+                  style={{ fontFamily: 'Inter, sans-serif', minWidth: '160px' }}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
               ))}
-            </div>
-          </div>
-        )}
-
-        <div className="rounded-2xl p-5 bg-white/85 shadow-[0_8px_25px_rgba(0,0,0,0.08)]">
-          <label className="text-muted text-xs font-semibold mb-3 block uppercase tracking-wide">Time Period</label>
-          <select
-            value={timePeriod}
-            onChange={(e) => setTimePeriod(e.target.value)}
-            className="w-full px-4 py-2.5 bg-white rounded-xl text-text font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-primary shadow-lg"
-          >
-            {periods.map((period) => (
-              <option key={period.value} value={period.value}>
-                {period.label}
-              </option>
-            ))}
-          </select>
+            </>
+          )}
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-white/90 rounded-3xl shadow-lg">
-          <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-          <p className="text-muted text-sm">Loading your charts...</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {rows.map((row) => (
-            <article key={row.key} className="group relative rounded-2xl p-4 sm:p-5 bg-white/90 shadow-[0_8px_30px_rgba(15,23,42,0.08)] hover:shadow-[0_14px_36px_rgba(15,23,42,0.14)] hover:-translate-y-0.5 transition-all">
-              <div className="absolute inset-0 -z-10 translate-y-1.5 rounded-2xl bg-primary/20 blur-md opacity-60" />
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-10 h-10 rounded-full bg-white shadow-inner flex items-center justify-center font-heading font-bold text-sm text-text">
-                  {row.rank}
-                </div>
-
-                {row.imageUrl ? (
-                  <img src={row.imageUrl} alt={row.item.name} className="w-12 h-12 rounded-lg object-cover shadow-md" />
-                ) : (
-                  <div className="w-12 h-12 rounded-lg bg-border/80 flex items-center justify-center text-[10px] text-muted shadow-md">No Art</div>
-                )}
-
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-base sm:text-lg font-heading font-bold text-text truncate">{row.item.name}</h3>
-                  <p className="text-muted text-xs sm:text-sm truncate">{row.artistName || 'Unknown artist'}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-sm font-semibold text-primary">{Number(row.item.playcount || 0).toLocaleString()} plays</span>
-                    {row.changeIcon}
-                  </div>
-                </div>
-
-                <details className="relative">
-                  <summary className="list-none cursor-pointer rounded-xl px-3 py-2 bg-white shadow-md text-xs font-semibold text-text hover:bg-primary/10">
-                    Actions
-                  </summary>
-                  <div className="absolute right-0 mt-2 w-44 rounded-xl bg-white p-2 shadow-2xl z-20">
-                    <a href={row.spotifyUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between px-3 py-2 rounded-lg text-sm hover:bg-accent/70">
-                      Spotify <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                    <a href={row.youTubeUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between px-3 py-2 rounded-lg text-sm hover:bg-primary/20">
-                      YouTube <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
-                </details>
-              </div>
-            </article>
+      {/* Time Period Selector - Hidden for now to match design */}
+      <div className="hidden">
+        <select value={timePeriod} onChange={(e) => setTimePeriod(e.target.value)}>
+          {periods.map((period) => (
+            <option key={period.value} value={period.value}>
+              {period.label}
+            </option>
           ))}
+        </select>
+      </div>
+
+      {/* Export Buttons - Hidden for now to match design */}
+      <div className="hidden">
+        <button onClick={exportPng}>Export PNG</button>
+        <button onClick={exportCsv}>Export CSV</button>
+      </div>
+
+      {loading ? (
+  <div className="flex flex-col items-start py-20">
+    <Loader2 className="w-10 h-10 text-black animate-spin mb-3" />
+    <p className="text-black text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
+      Loading your charts...
+    </p>
+  </div>
+) : (
+
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5 px-6 mt-10 items-start">
+
+    {rows.map((row) => (
+
+      <article
+        key={row.key}
+        className="
+  flex items-center justify-between
+  bg-[#EDEDED]
+  rounded-full
+  px-5 py-2
+  hover:shadow-sm
+  transition-all
+  w-full
+  max-w-[520px]
+"
+      >
+
+        {/* LEFT SIDE */}
+        <div className="flex items-center gap-3">
+
+          {/* RANK */}
+          <span
+            className="text-lg font-semibold w-5"
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          >
+            {row.rank}
+          </span>
+
+          {/* IMAGE */}
+          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gray-300">
+
+  {row.imageUrl && (
+    <img
+      src={row.imageUrl}
+      alt={row.item.name}
+      className="w-full h-full object-cover"
+    />
+  )}
+
+</div>
+
+  
+           : (
+            <div className="w-10 h-10 rounded-full bg-gray-300" />
+          )
+
+          {/* NAME + PLAYS */}
+          <div>
+            <h3
+              className="text-base leading-none"
+              style={{ fontFamily: 'Inter, sans-serif' }}
+            >
+              {row.item.name}
+            </h3>
+
+            <p
+              className="text-xs text-gray-500"
+              style={{ fontFamily: 'Krub, sans-serif' }}
+            >
+              {Number(row.item.playcount || 0).toLocaleString()} plays
+            </p>
+          </div>
+
         </div>
-      )}
+
+        {/* RIGHT SIDE LINKS */}
+        <div
+          className="flex gap-3 text-xs"
+          style={{ fontFamily: 'Krub, sans-serif' }}
+        >
+          <a
+            href={row.youTubeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#FFB7C5] hover:underline"
+          >
+            YouTube
+          </a>
+
+          <a
+            href={row.spotifyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#D5F3D8] hover:underline"
+          >
+            Spotify
+          </a>
+        </div>
+
+      </article>
+
+    ))}
+
+  </div>
+
+)}
     </div>
   );
 }

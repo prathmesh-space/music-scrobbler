@@ -56,10 +56,13 @@ function App() {
 
   if (loading) {
     return (
-      <div className="app-loading-shell">
-        <div className="app-loading-content">
-          <Loader2 className="app-loading-icon" />
-          <p className="app-loading-text">Loading your music...</p>
+      <div className="loading-shell">
+        <div className="loading-container">
+          <div className="loading-spinner">
+            <Loader2 className="loading-icon" />
+          </div>
+          <p className="loading-text">Tuning in to your music...</p>
+          <p className="loading-subtext">Just a moment</p>
         </div>
       </div>
     );
@@ -85,7 +88,13 @@ function App() {
                     <Route
                       key={path}
                       path={path}
-                      element={withUsername ? <RouteComponent username={username} /> : <RouteComponent />}
+                      element={
+                        withUsername ? (
+                          <RouteComponent username={username} />
+                        ) : (
+                          <RouteComponent />
+                        )
+                      }
                     />
                   );
                 })}
@@ -101,22 +110,31 @@ function App() {
         </main>
 
         {isLoggedIn && showOnboarding && (
-          <div className="app-modal-overlay">
-            <div className="app-modal-card">
-              <div className="app-modal-header">
-                <div className="app-modal-icon">
-                  <Sparkles className="h-6 w-6 text-white" />
+          <div className="modal-overlay">
+            <div className="modal-card">
+              <div className="modal-header">
+                <div className="modal-icon-wrapper">
+                  <Sparkles className="modal-icon" />
                 </div>
-                <div>
-                  <h2 className="app-modal-title">Welcome to Music Scrobbler</h2>
-                  <p className="app-modal-subtitle">Your personal music insights dashboard</p>
+                <div className="modal-header-text">
+                  <h2 className="modal-title">Welcome to Music Scrobbler</h2>
+                  <p className="modal-subtitle">Your personal music insights dashboard</p>
                 </div>
               </div>
 
-              <ul className="app-modal-list">
-                <li>Explore your listening insights and track your music journey.</li>
-                <li>Discover recommendations and hidden gems in Discovery Lab.</li>
-                <li>Track streaks, goals, milestones, and daily listening rituals.</li>
+              <ul className="modal-list">
+                <li className="modal-list-item">
+                  <span className="modal-list-dot" />
+                  Explore your listening insights and track your music journey
+                </li>
+                <li className="modal-list-item">
+                  <span className="modal-list-dot" />
+                  Discover recommendations and hidden gems in Discovery Lab
+                </li>
+                <li className="modal-list-item">
+                  <span className="modal-list-dot" />
+                  Track streaks, goals, milestones, and daily listening rituals
+                </li>
               </ul>
 
               <button
@@ -124,7 +142,7 @@ function App() {
                   setShowOnboarding(false);
                   localStorage.setItem(ONBOARDING_KEY, 'true');
                 }}
-                className="app-primary-button"
+                className="primary-button modal-button"
               >
                 Get Started
               </button>
@@ -136,10 +154,10 @@ function App() {
           <button
             aria-label="Scroll back to top"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="app-back-to-top"
+            className="back-to-top-button"
           >
-            <ArrowUpCircle className="h-5 w-5" />
-            Back to Top
+            <ArrowUpCircle className="back-to-top-icon" />
+            <span>Back to Top</span>
           </button>
         )}
       </div>

@@ -1,170 +1,202 @@
 import React from 'react';
+import { Music } from 'lucide-react';
 
 const LoginButton = ({ onClick }) => {
   return (
-    <div className="login-container">
-      <div className="login-content">
-        <div className="login-card">
-          <div className="logo-section">
-            <div className="logo-icon" />
-            <h1 className="login-title">Music Scrobbler</h1>
+    <div className="auth-container">
+      <div className="auth-wrapper">
+        <div className="auth-card">
+          <div className="auth-icon-section">
+            <div className="auth-icon-wrapper">
+              <Music className="auth-icon" />
+            </div>
           </div>
 
-          <p className="login-subtitle">
-            Track your listening journey with Last.fm
+          <h1 className="auth-title">Music Scrobbler</h1>
+          <p className="auth-subtitle">
+            Discover your musical story with insightful analytics
           </p>
 
           <button
             onClick={onClick}
-            className="login-button"
+            className="auth-login-button"
             aria-label="Login with Last.fm"
           >
             Login with Last.fm
           </button>
 
-          <div className="features">
-            <div className="feature-item">
-              <span className="feature-dot" />
-              <span>Comprehensive tracking</span>
-            </div>
-            <div className="feature-item">
-              <span className="feature-dot" />
-              <span>Real-time analytics</span>
-            </div>
-            <div className="feature-item">
-              <span className="feature-dot" />
-              <span>Secure integration</span>
-            </div>
-          </div>
+          <div className="auth-divider" />
+
+          <ul className="auth-features-list">
+            <li className="auth-feature">
+              <span className="auth-feature-text">Track your listening habits</span>
+            </li>
+            <li className="auth-feature">
+              <span className="auth-feature-text">Real-time music insights</span>
+            </li>
+            <li className="auth-feature">
+              <span className="auth-feature-text">Secure & private</span>
+            </li>
+          </ul>
         </div>
+
+        <p className="auth-footer">Powered by Last.fm API</p>
       </div>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Krub:wght@400;500;600;700&display=swap');
 
-        :root {
-          --bg-main: #FDF6EC;
-          --card-bg: #FFFFFF;
-          --primary: #7A1E2C;        /* deep cherry */
-          --primary-hover: #5E1621;
-          --text-main: #1F1F1F;
-          --text-muted: #6D6D6D;
-          --border-soft: #EEE6DA;
-        }
-
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
-
-        .login-container {
+        .auth-container {
           min-height: 100vh;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: var(--bg-main);
-          font-family: 'Inter', sans-serif;
+          padding: 1.5rem;
+          background: linear-gradient(135deg, #FFF8F6 0%, #FFE5D9 50%, #E0F5F0 100%);
+          font-family: 'Krub', sans-serif;
         }
 
-        .login-content {
+        .auth-wrapper {
           width: 100%;
-          max-width: 460px;
-          padding: 2rem;
+          max-width: 420px;
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
         }
 
-        .login-card {
-          background: var(--card-bg);
-          border-radius: 16px;
-          padding: 3rem 2.75rem;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
-          border: 1px solid var(--border-soft);
+        .auth-card {
+          background: #FFFFFF;
+          border-radius: 1.75rem;
+          padding: 2.5rem 2rem;
+          box-shadow: 0 10px 40px rgba(255, 183, 220, 0.15), 0 0 0 1px rgba(245, 232, 232, 0.8);
+          animation: fade-in-up 0.6s ease;
         }
 
-        .logo-section {
+        .auth-icon-section {
           text-align: center;
-          margin-bottom: 1.25rem;
+          margin-bottom: 1.5rem;
         }
 
-        .logo-icon {
-          width: 52px;
-          height: 52px;
-          margin: 0 auto 1.25rem;
-          background: var(--primary);
-          border-radius: 12px;
+        .auth-icon-wrapper {
+          width: 72px;
+          height: 72px;
+          margin: 0 auto;
+          background: linear-gradient(135deg, #FFD1DC 0%, #E0F5F0 100%);
+          border-radius: 1.25rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 8px 24px rgba(255, 183, 220, 0.25);
         }
 
-        .login-title {
-          font-family: 'Playfair Display', serif;
-          font-size: 2.1rem;
+        .auth-icon {
+          width: 40px;
+          height: 40px;
+          color: #2D2D2D;
+        }
+
+        .auth-title {
+          font-family: 'Inter', sans-serif;
+          font-size: 2rem;
           font-weight: 700;
-          color: var(--text-main);
+          text-align: center;
+          color: #2D2D2D;
+          margin: 0 0 0.5rem 0;
           letter-spacing: -0.02em;
         }
 
-        .login-subtitle {
+        .auth-subtitle {
           text-align: center;
           font-size: 0.95rem;
-          color: var(--text-muted);
-          margin-bottom: 2.25rem;
+          color: #888888;
+          margin: 0 0 2rem 0;
           line-height: 1.6;
         }
 
-        .login-button {
+        .auth-login-button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
           width: 100%;
-          padding: 15px 24px;
-          border-radius: 10px;
+          padding: 1rem 1.5rem;
+          border-radius: 0.875rem;
           border: none;
-          background: var(--primary);
-          color: #FFFFFF;
-          font-size: 0.95rem;
+          background: linear-gradient(135deg, #FFD1DC 0%, #FFC5D0 100%);
+          color: white;
+          font-size: 1rem;
           font-weight: 600;
+          font-family: 'Krub', sans-serif;
           cursor: pointer;
-          transition: background 0.25s ease, transform 0.15s ease;
+          transition: all 0.3s ease;
+          box-shadow: 0 6px 20px rgba(255, 183, 220, 0.3);
         }
 
-        .login-button:hover {
-          background: var(--primary-hover);
-          transform: translateY(-1px);
+        .auth-login-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 28px rgba(255, 183, 220, 0.4);
         }
 
-        .login-button:active {
+        .auth-login-button:active {
           transform: translateY(0);
         }
 
-        .features {
-          margin-top: 2.25rem;
-          padding-top: 1.75rem;
-          border-top: 1px solid var(--border-soft);
+        .auth-divider {
+          height: 1px;
+          background: #F5E8E8;
+          margin: 1.5rem 0;
         }
 
-        .feature-item {
+        .auth-features-list {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+
+        .auth-feature {
           display: flex;
           align-items: center;
-          gap: 0.65rem;
-          margin-bottom: 0.75rem;
-          font-size: 0.85rem;
-          color: var(--text-muted);
+          font-size: 0.9rem;
+          color: #2D2D2D;
+          line-height: 1.5;
         }
 
-        .feature-item:last-child {
-          margin-bottom: 0;
+        .auth-feature-text {
+          font-weight: 500;
         }
 
-        .feature-dot {
-          width: 6px;
-          height: 6px;
-          background: var(--primary);
-          border-radius: 50%;
+        .auth-footer {
+          text-align: center;
+          font-size: 0.8rem;
+          color: #888888;
+          margin: 0;
+        }
+
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         @media (max-width: 480px) {
-          .login-card {
-            padding: 2.5rem 2rem;
+          .auth-card {
+            padding: 2rem 1.5rem;
           }
 
-          .login-title {
-            font-size: 1.8rem;
+          .auth-title {
+            font-size: 1.75rem;
+          }
+
+          .auth-subtitle {
+            font-size: 0.9rem;
           }
         }
       `}</style>

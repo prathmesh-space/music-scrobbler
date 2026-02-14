@@ -6,45 +6,47 @@
 
 @layer base {
   :root {
-    /* New Color Palette */
-    --bg: #F2C7C7;
+    /* Cute Pastel Color Palette */
+    --bg: #FFF8F6;
     --card: #FFFFFF;
-    --primary: #FFB7C5;
-    --primary-hover: #F29CAD;
-    --accent: #D5F3D8;
-    --text: #1F1F1F;
-    --muted: #6D6D6D;
-    --border: #F2DADA;
-    
-    /* CSS Custom Properties */
-    --color-rose: #F2C7C7;
-    --color-pink: #FFB7C5;
-    --color-mint: #D5F3D8;
+    --primary: #FFD1DC;
+    --primary-hover: #FFC5D0;
+    --accent: #C8E6D7;
+    --text: #2D2D2D;
+    --muted: #888888;
+    --border: #F5E8E8;
+
+    /* Cute color accents */
+    --color-rose: #FFF0F5;
+    --color-pink: #FFD1DC;
+    --color-mint: #E0F5F0;
+    --color-lavender: #E8E0F5;
+    --color-peach: #FFE5D9;
     --color-white: #FFFFFF;
-    
+
     /* Old colors for backwards compatibility */
-    --color-cream: #FDF6EC;
-    --color-coral: #FF6B6B;
-    --color-teal: #4ECDC4;
-    --color-dark: #1A1A1A;
-    --color-plum: #463239;
-    --color-orange: #FF8D28;
+    --color-cream: #FFF8F6;
+    --color-coral: #FF9DB5;
+    --color-teal: #7FD9D0;
+    --color-dark: #3D3D3D;
+    --color-plum: #D8B8C4;
+    --color-orange: #FFB87A;
   }
-  
+
   html {
     scroll-behavior: smooth;
   }
-  
+
   html,
   body,
   #root {
     min-height: 100vh;
     width: 100%;
   }
-  
+
   body {
     font-family: 'Krub', sans-serif;
-    background: linear-gradient(135deg, var(--bg) 0%, var(--primary) 50%, var(--accent) 100%);
+    background: linear-gradient(135deg, var(--bg) 0%, var(--color-peach) 50%, var(--accent) 100%);
     color: var(--text);
   }
   
@@ -127,6 +129,266 @@ a {
 :focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+}
+
+/* App shell and layout */
+.app-shell {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.app-shell-glow {
+  position: fixed;
+  pointer-events: none;
+  opacity: 0.3;
+  border-radius: 50%;
+}
+
+.app-shell-glow--left {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, var(--color-lavender) 0%, transparent 70%);
+  top: -50px;
+  left: -50px;
+}
+
+.app-shell-glow--right {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, var(--color-peach) 0%, transparent 70%);
+  bottom: -50px;
+  right: -50px;
+}
+
+.app-main-surface {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  padding-bottom: 2rem;
+}
+
+/* Loading states */
+.loading-shell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--bg) 0%, var(--color-peach) 50%, var(--accent) 100%);
+}
+
+.loading-container {
+  text-align: center;
+  animation: fade-in 0.5s ease;
+}
+
+.loading-spinner {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  perspective: 1000px;
+}
+
+.loading-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--primary);
+  animation: spin 2s linear infinite;
+}
+
+.loading-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.loading-subtext {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(45, 45, 45, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem;
+  animation: fade-in 0.3s ease;
+}
+
+.modal-card {
+  background: var(--card);
+  border-radius: 1.5rem;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(45, 45, 45, 0.1), 0 0 0 1px rgba(255, 183, 220, 0.2);
+  animation: slide-up 0.4s ease;
+}
+
+.modal-header {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.modal-icon-wrapper {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-icon {
+  width: 24px;
+  height: 24px;
+  color: white;
+}
+
+.modal-header-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 0.25rem 0;
+}
+
+.modal-subtitle {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.modal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.modal-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.95rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.modal-list-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  background: var(--primary);
+  border-radius: 50%;
+  margin-top: 0.375rem;
+  margin-right: 0.5rem;
+}
+
+.modal-button {
+  width: 100%;
+}
+
+/* Primary button style */
+.primary-button {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--color-pink) 100%);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(255, 183, 220, 0.3);
+}
+
+.primary-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 183, 220, 0.4);
+}
+
+.primary-button:active {
+  transform: translateY(0);
+}
+
+/* Back to top button */
+.back-to-top-button {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--card);
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  border-radius: 999px;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 100;
+  box-shadow: 0 4px 16px rgba(255, 183, 220, 0.2);
+}
+
+.back-to-top-button:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-4px);
+  box-shadow: 0 6px 24px rgba(255, 183, 220, 0.3);
+}
+
+.back-to-top-icon {
+  width: 18px;
+  height: 18px;
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Page layout utilities */
