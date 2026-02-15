@@ -23,6 +23,11 @@ import { ArrowUpCircle, Loader2, Sparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import './App.css';
 
+// Import your background image
+// If this doesn't work, move the image to public/assets/background.jpg
+// and use: '/assets/background.jpg' in the backgroundImage below
+import backgroundImg from './assets/background.jpg'; // Adjust path as needed
+
 const ONBOARDING_KEY = 'music-scrobbler-onboarding-completed';
 
 const pageComponents = {
@@ -39,6 +44,42 @@ const pageComponents = {
   ListeningGoals,
   DiscoveryLab,
   Recognition: SongRecognition,
+};
+
+// Inline styles as fallback - these will DEFINITELY work
+const backgroundContainerStyle = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  width: '100vw',
+  height: '100vh',
+  zIndex: -1,
+  overflow: 'hidden',
+  pointerEvents: 'none'
+};
+
+const backgroundImageStyle = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: '100%',
+  backgroundImage: `url(${backgroundImg})`, // or use: url('/assets/background.jpg')
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  backgroundRepeat: 'no-repeat'
+};
+
+const backgroundOverlayStyle = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: '100%',
+  background: 'linear-gradient(to bottom, rgba(207, 208, 185, 0.15) 0%, rgba(207, 208, 185, 0.25) 50%, rgba(207, 208, 185, 0.35) 100%)',
+  backdropFilter: 'blur(0.5px)'
 };
 
 function App() {
@@ -71,12 +112,13 @@ function App() {
   return (
     <Router>
       <div className="app-shell">
-        {/* Background Image Layer */}
-        <div className="app-background">
-          <div className="app-background-image" />
-          <div className="app-background-overlay" />
+        {/* Background Image Layer with INLINE STYLES (guaranteed to work) */}
+        <div style={backgroundContainerStyle}>
+          <div style={backgroundImageStyle} />
+          <div style={backgroundOverlayStyle} />
         </div>
 
+        {/* Glow effects */}
         <div className="app-shell-glow app-shell-glow--left" />
         <div className="app-shell-glow app-shell-glow--right" />
 

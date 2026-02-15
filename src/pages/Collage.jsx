@@ -27,7 +27,7 @@ const fetchByType = {
   tracks: { fetcher: getTopTracks, key: 'track' },
 };
 
-const Collage = ({ username }) => {
+const Collage = ({ username, embedded = false }) => {
   const [gridSize, setGridSize] = useState('3x3');
   const [timePeriod, setTimePeriod] = useState('7day');
   const [collageType, setCollageType] = useState('albums');
@@ -153,7 +153,7 @@ const Collage = ({ username }) => {
   const selectedTypeLabel = collageTypes.find((type) => type.value === collageType)?.label || 'Albums';
 
   return (
-    <div className="page-shell">
+    <div className={embedded ? "" : "page-shell"}>
       <div className="page-container page-container--compact">
         <h1 className="mb-8 text-4xl font-bold text-white">Music Collage Generator</h1>
 

@@ -5,6 +5,8 @@ import { getSpotifyAlbumImage, getSpotifyArtistImage, getSpotifyTrackImage } fro
 import { buildSearchQuery, getSpotifySearchUrl, getYouTubeSearchUrl } from '../utils/musicLinks';
 import { getLastFmImageUrl } from '../utils/lastfmImage.js';
 import { getCachedData, setCachedData } from '../utils/cache';
+import Statistics from './Statistics';
+import Collage from './Collage';
 
 const PERIODS = [
   { value: '7day', label: '7 Days' },
@@ -16,6 +18,7 @@ const PERIODS = [
 ];
 
 const TABS = ['artists', 'albums', 'tracks'];
+const SECTIONS = ['charts', 'statistics', 'collage'];
 
 const getEntityKey = (tab) => {
   if (tab === 'artists') return 'artist';
@@ -38,6 +41,7 @@ export default function Charts({
   subtitle = 'Discover your most played music',
 }) {
   const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeSection, setActiveSection] = useState('charts');
   const [timePeriod, setTimePeriod] = useState('7day');
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -183,107 +187,164 @@ export default function Charts({
   );
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] p-8">
-      <header className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h1 className="text-4xl font-bold text-black md:text-6xl">{title}</h1>
-          <p className="mt-2 text-sm text-gray-600 md:text-base">{subtitle}</p>
-        </div>
+    <div className="min-h-screen p-8" style={{ background: 'transparent' }}>
+      <div className="mx-auto max-w-7xl">
+        {/* Header */}
+        <header className="mb-8 flex flex-col gap-5">
+          <div>
+            <h1 className="font-['Amiri_Quran'] text-5xl font-normal text-[#3E3D1A] md:text-7xl">
+              {title}
+            </h1>
+            <p className="mt-3 font-['Inter_Display'] text-lg font-light text-[#2D2D2D] md:text-xl">
+              {subtitle}
+            </p>
+          </div>
 
-        <div className="flex flex-wrap gap-2">
-          {!lockTab &&
-            TABS.map((tab) => (
+          {/* Section Tabs */}
+          <div className="flex flex-wrap gap-3">
+            {SECTIONS.map((section) => (
               <button
-                key={tab}
+                key={section}
                 type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition md:text-base ${
-                  activeTab === tab
-                    ? 'bg-black text-white'
-                    : 'bg-white text-black ring-1 ring-gray-300 hover:bg-gray-50'
+                onClick={() => setActiveSection(section)}
+                className={`rounded-[59px] px-8 py-4 text-base font-normal transition-all duration-300 md:text-lg ${
+                  activeSection === section
+                    ? 'bg-[#6B5A2A] text-[#CFD0B9] shadow-[0_4px_4px_rgba(0,0,0,0.25)]'
+                    : 'bg-[#55491A] text-[#CFD0B9] hover:bg-[#6B5A2A]'
                 }`}
               >
-                {tab[0].toUpperCase() + tab.slice(1)}
+                {section[0].toUpperCase() + section.slice(1)}
               </button>
             ))}
-        </div>
-      </header>
+          </div>
+        </header>
 
-      <div className="mb-6 flex items-center justify-between">
-        <label className="text-sm text-gray-600" htmlFor="chart-period">
-          Time period
-        </label>
-        <select
-          id="chart-period"
-          value={timePeriod}
-          onChange={(event) => setTimePeriod(event.target.value)}
-          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm"
-        >
-          {PERIODS.map((period) => (
-            <option key={period.value} value={period.value}>
-              {period.label}
-            </option>
-          ))}
-        </select>
-      </div>
+        {activeSection === 'charts' ? (
+          <>
+            {/* Controls */}
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+              {/* Tab Buttons */}
+              <div className="flex flex-wrap gap-3">
+                {!lockTab &&
+                  TABS.map((tab) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setActiveTab(tab)}
+                      className={`rounded-[59px] px-6 py-3 text-base font-normal transition-all duration-300 ${
+                        activeTab === tab
+                          ? 'bg-[#EECEA4] text-[#3E3D1A] shadow-[0_4px_4px_rgba(0,0,0,0.25)]'
+                          : 'bg-[#55491A] text-[#CFD0B9] hover:bg-[#6B5A2A]'
+                      }`}
+                    >
+                      {tab[0].toUpperCase() + tab.slice(1)}
+                    </button>
+                  ))}
+              </div>
 
-      {loading ? (
-        <div className="flex items-center gap-2 py-20 text-gray-600">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          <span>Loading your charts…</span>
-        </div>
-      ) : rows.length === 0 ? (
-        <p className="py-20 text-sm text-gray-600">No chart data available for this range yet.</p>
-      ) : (
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-          {rows.map((row) => (
-            <article
-              key={row.key}
-              className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-gray-100"
-            >
-              <div className="flex min-w-0 items-center gap-3">
-                <span className="w-8 text-center text-sm font-semibold text-gray-500">#{row.rank}</span>
+              {/* Time Period Selector */}
+              <div className="flex items-center gap-3">
+                <label 
+                  className="font-['Inter'] text-sm font-light text-[#3E3D1A]" 
+                  htmlFor="chart-period"
+                >
+                  Time period
+                </label>
+                <select
+                  id="chart-period"
+                  value={timePeriod}
+                  onChange={(event) => setTimePeriod(event.target.value)}
+                  className="rounded-[20px] border-2 border-[#CFD0B9] bg-white px-4 py-2 text-sm text-[#3E3D1A] shadow-sm transition-all focus:border-[#EECEA4] focus:outline-none focus:ring-2 focus:ring-[#EECEA4]/50"
+                >
+                  {PERIODS.map((period) => (
+                    <option key={period.value} value={period.value}>
+                      {period.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
-                {row.imageUrl ? (
-                  <img
-                    src={row.imageUrl}
-                    alt={row.name}
-                    className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="h-12 w-12 flex-shrink-0 rounded-full bg-gray-200" />
-                )}
-
-                <div className="min-w-0">
-                  <h3 className="truncate text-sm font-semibold text-black">{row.name}</h3>
-                  <p className="truncate text-xs text-gray-500">
-                    {activeTab === 'artists' ? `${row.plays.toLocaleString()} plays` : `${row.artistName} • ${row.plays.toLocaleString()} plays`}
+            {/* 🔥 NEW: Grid Layout with Sidebar 🔥 */}
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+              
+              {/* LEFT: Charts Section (2/3 width) */}
+              <div className="lg:col-span-2">
+                {loading ? (
+                  <div className="flex items-center justify-center gap-3 py-20">
+                    <Loader2 className="h-6 w-6 animate-spin text-[#6B5A2A]" />
+                    <span className="font-['Inter'] text-lg text-[#3E3D1A]">
+                      Loading your charts…
+                    </span>
+                  </div>
+                ) : rows.length === 0 ? (
+                  <p className="py-20 text-center font-['Inter'] text-base text-[#6B5A2A]">
+                    No chart data available for this range yet.
                   </p>
-                </div>
+                ) : (
+                  <div className="scrollable-list-container">
+                    {rows.slice(0, 50).map((row) => (
+                      <article
+                        key={row.key}
+                        className="scrollable-list-item"
+                      >
+                        <div className="scrollable-list-rank">{row.rank}</div>
+
+                        <div className="scrollable-list-content">
+                          <div className="scrollable-list-info">
+                            {row.imageUrl && (
+                              <img
+                                src={row.imageUrl}
+                                alt={row.name}
+                                className="scrollable-list-image"
+                              />
+                            )}
+                            <div className="scrollable-list-text">
+                              <h3 className="scrollable-list-name">{row.name}</h3>
+                              <p className="scrollable-list-plays">
+                                Plays {row.plays.toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="scrollable-list-links">
+                            <a
+                              href={row.youTubeUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              youtube
+                            </a>
+                            <span>/</span>
+                            <a
+                              href={row.spotifyUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              spotify
+                            </a>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <div className="ml-3 flex items-center gap-2 text-xs">
-                <a
-                  href={row.youTubeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-rose-700 hover:bg-rose-100"
-                >
-                  YouTube <ExternalLink className="h-3 w-3" />
-                </a>
-                <a
-                  href={row.spotifyUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700 hover:bg-emerald-100"
-                >
-                  Spotify <ExternalLink className="h-3 w-3" />
-                </a>
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
+              {/* RIGHT: Statistics Sidebar (1/3 width) */}
+<div className="lg:col-span-1">
+  <div className="sticky top-24">
+    <Statistics username={username} embedded />
+  </div>
+</div>
+            </div>
+          </>
+        ) : activeSection === 'statistics' ? (
+          <Statistics username={username} embedded />
+        ) : (
+          <Collage username={username} embedded />
+        )}
+      </div>
     </div>
   );
 }
