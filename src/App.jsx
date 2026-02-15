@@ -71,6 +71,12 @@ function App() {
   return (
     <Router>
       <div className="app-shell">
+        {/* Background Image Layer */}
+        <div className="app-background">
+          <div className="app-background-image" />
+          <div className="app-background-overlay" />
+        </div>
+
         <div className="app-shell-glow app-shell-glow--left" />
         <div className="app-shell-glow app-shell-glow--right" />
 

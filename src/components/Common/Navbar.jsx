@@ -1,280 +1,272 @@
-import { useEffect } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
-import { LogOut, Menu, Search } from 'lucide-react';
-import { navigationItems } from '../../config/routes';
-
-const RECENT_ROUTES_KEY = 'music-scrobbler-recent-routes';
-
-const getStoredRecentRoutes = () => {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(RECENT_ROUTES_KEY) || '[]');
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-};
+import { useLocation, useNavigate } from 'react-router-dom';
+import { User } from 'lucide-react';
 
 const Navbar = ({ username, onLogout }) => {
   const location = useLocation();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    const matchedRoute = navigationItems.find((item) => item.path === location.pathname);
-    if (!matchedRoute) return;
-
-    const previous = getStoredRecentRoutes();
-    const next = [matchedRoute.path, ...previous.filter((path) => path !== matchedRoute.path)].slice(0, 4);
-    localStorage.setItem(RECENT_ROUTES_KEY, JSON.stringify(next));
-  }, [location.pathname]);
+  const navItems = [
+    { label: 'Home', path: '/' },
+    { label: 'Charts', path: '/charts' },
+    { label: 'Friends', path: '/friends' },
+    { label: 'Discovery', path: '/discovery' },
+  ];
 
   return (
-    <>
-      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Krub:wght@400;500;600&display=swap" rel="stylesheet" />
-
-      <header className="navbar-header">
-        <div className="navbar-container">
-
-          {/* Top Bar: Logo and User */}
-          <div className="navbar-top-bar">
-            <Link to="/" className="navbar-logo">
-              Music Scrobbler
-            </Link>
-
-            <div className="navbar-user-section">
-              {username && (
-                <span className="navbar-username">
-                  @ {username}
-                </span>
-              )}
-              {onLogout && (
-                <button onClick={onLogout} className="navbar-logout-btn">
-                  <LogOut className="navbar-logout-icon" />
-                  <span>Logout</span>
-                </button>
-              )}
-            </div>
+    <header className="pill-navbar">
+      <div className="pill-navbar-overlay">
+        <nav className="pill-nav-content">
+          <div className="pill-nav-buttons">
+            {navItems.map((item) => (
+              <button
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className={`pill-nav-button ${location.pathname === item.path ? 'pill-nav-button--active' : ''}`}
+                aria-current={location.pathname === item.path ? 'page' : undefined}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
 
-          {/* Glass Navigation Bar */}
-          <nav className="navbar-glass-container">
-            <button className="navbar-sidebar-btn" aria-label="Menu">
-              <Menu size={20} strokeWidth={2} />
-            </button>
+          <button
+            className="pill-profile-button"
+            onClick={() => navigate('/profile')}
+            aria-label="Profile"
+            title={username}
+          >
+            <User size={32} />
+          </button>
+        </nav>
+      </div>
 
-            <div className="navbar-tabs-wrapper">
-              {navigationItems.map((item, i) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  end={i === 0}
-                  className={({ isActive }) =>
-                    isActive ? 'navbar-tab navbar-tab-active' : 'navbar-tab'
-                  }
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-            </div>
+      <style>{`
+        .pill-navbar {
+          position: sticky;
+          top: 0;
+          z-index: 50;
+          padding: 1.25rem 2rem;
+        }
 
-            <button className="navbar-search-btn" aria-label="Search">
-              <Search size={20} strokeWidth={2} />
-            </button>
-          </nav>
+        .pill-navbar-overlay {
+          background: rgba(207, 208, 185, 0.35);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-radius: 100px;
+          padding: 1.5rem 2.5rem;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+        }
 
-        </div>
+        .pill-nav-content {
+          max-width: 1440px;
+          margin: 0 auto;
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+          justify-content: space-between;
+        }
 
-        <style>{`
-          .navbar-header {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            background: #FFFFFF;
-            box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25);
-            backdrop-filter: blur(2px);
+        .pill-nav-buttons {
+          display: flex;
+          align-items: center;
+          gap: 1.25rem;
+          flex: 1;
+        }
+
+        .pill-nav-button {
+          padding: 1.5rem 3rem;
+          border-radius: 59px;
+          background: rgba(85, 73, 34, 0.9);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25);
+          border: none;
+          color: #CFD0B9;
+          font-family: 'Inter', sans-serif;
+          font-size: 2rem;
+          font-weight: 400;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          white-space: nowrap;
+        }
+
+        .pill-nav-button:hover {
+          background: rgba(107, 90, 43, 0.95);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 8px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .pill-nav-button--active {
+          background: rgba(107, 90, 43, 0.95);
+          box-shadow: 0 6px 8px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .pill-profile-button {
+          padding: 1.25rem;
+          width: 88px;
+          height: 88px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          border: 2px solid rgba(255, 255, 255, 0.5);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25);
+          color: #999;
+          flex-shrink: 0;
+        }
+
+        .pill-profile-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 8px 0 rgba(0, 0, 0, 0.3);
+          background: rgba(255, 255, 255, 1);
+        }
+
+        @media (max-width: 1024px) {
+          .pill-navbar {
+            padding: 1rem 1.5rem;
           }
 
-          .navbar-container {
-            max-width: 95rem;
-            margin: 0 auto;
-            padding: 1.5rem 2.5rem;
+          .pill-navbar-overlay {
+            padding: 1.25rem 2rem;
+            border-radius: 80px;
           }
 
-          .navbar-top-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1.75rem;
+          .pill-nav-button {
+            font-size: 1.75rem;
+            padding: 1.25rem 2.5rem;
           }
 
-          .navbar-logo {
-            font-family: 'Inter', -apple-system, sans-serif;
-            font-size: 3rem;
-            font-weight: 800;
-            line-height: 2.8125rem;
-            letter-spacing: -0.046875rem;
-            color: #000000;
-            text-decoration: none;
-            transition: opacity 0.3s;
+          .pill-profile-button {
+            width: 72px;
+            height: 72px;
           }
 
-          .navbar-logo:hover {
-            opacity: 0.8;
+          .pill-profile-button svg {
+            width: 28px;
+            height: 28px;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .pill-navbar {
+            padding: 0.875rem 1rem;
           }
 
-          .navbar-user-section {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
+          .pill-navbar-overlay {
+            padding: 1rem 1.5rem;
+            border-radius: 60px;
           }
 
-          .navbar-username {
-            font-family: 'Krub', -apple-system, sans-serif;
-            font-size: 0.875rem;
-            font-weight: 500;
-            line-height: 1.3125rem;
-            color: rgba(0, 0, 0, 0.6);
+          .pill-nav-content {
+            gap: 1rem;
           }
 
-          .navbar-logout-btn {
-            display: flex;
-            align-items: center;
+          .pill-nav-buttons {
+            gap: 0.75rem;
+          }
+
+          .pill-nav-button {
+            font-size: 1.5rem;
+            padding: 1rem 2rem;
+          }
+
+          .pill-profile-button {
+            width: 64px;
+            height: 64px;
+          }
+
+          .pill-profile-button svg {
+            width: 26px;
+            height: 26px;
+          }
+        }
+
+        @media (max-width: 640px) {
+          .pill-navbar {
+            padding: 0.75rem 0.75rem;
+          }
+
+          .pill-navbar-overlay {
+            padding: 0.875rem 1.25rem;
+            border-radius: 50px;
+          }
+
+          .pill-nav-content {
+            gap: 0.75rem;
+          }
+
+          .pill-nav-buttons {
             gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            transition: opacity 0.3s;
-          }
-
-          .navbar-logout-btn:hover {
-            opacity: 0.7;
-          }
-
-          .navbar-logout-btn span {
-            font-family: 'Krub', -apple-system, sans-serif;
-            font-size: 0.75rem;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.0375rem;
-            color: #FFFFFF;
-          }
-
-          .navbar-logout-icon {
-            width: 1rem;
-            height: 1rem;
-            stroke: #FFFFFF;
-          }
-
-          .navbar-glass-container {
-            display: flex;
-            align-items: center;
-            padding: 0.25rem;
-            background: linear-gradient(0deg, #F7F7F7 0%, #F7F7F7 100%),
-                        linear-gradient(0deg, rgba(255, 255, 255, 0.50) 0%, rgba(255, 255, 255, 0.50) 100%);
-            border-radius: 18.5rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             overflow-x: auto;
+            flex: 1;
+            padding-bottom: 0;
             scrollbar-width: none;
+            -ms-overflow-style: none;
           }
 
-          .navbar-glass-container::-webkit-scrollbar {
+          .pill-nav-buttons::-webkit-scrollbar {
             display: none;
           }
 
-          .navbar-sidebar-btn,
-          .navbar-search-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            width: 3.375rem;
-            padding: 0.5rem 1rem;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            color: #1A1A1A;
-            transition: opacity 0.3s;
-          }
-
-          .navbar-sidebar-btn:hover,
-          .navbar-search-btn:hover {
-            opacity: 0.6;
-          }
-
-          .navbar-tabs-wrapper {
-            display: flex;
-            align-items: center;
-            flex: 1;
-            gap: 0.25rem;
-            padding: 0 0.5rem;
-          }
-
-          .navbar-tab {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.5rem 1.125rem;
-            font-family: -apple-system, 'SF Pro', 'Segoe UI', sans-serif;
-            font-size: 0.9375rem;
-            font-weight: 510;
-            line-height: 1.25rem;
-            letter-spacing: -0.014375rem;
-            color: #1A1A1A;
-            text-decoration: none;
-            white-space: nowrap;
-            border-radius: 6.25rem;
-            transition: all 0.3s;
+          .pill-nav-button {
+            font-size: 1.25rem;
+            padding: 0.875rem 1.75rem;
             flex-shrink: 0;
           }
 
-          .navbar-tab:hover:not(.navbar-tab-active) {
-            background: rgba(0, 0, 0, 0.04);
+          .pill-profile-button {
+            width: 56px;
+            height: 56px;
+            flex-shrink: 0;
           }
 
-          .navbar-tab-active {
-            background: #EDEDED;
+          .pill-profile-button svg {
+            width: 24px;
+            height: 24px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .pill-navbar {
+            padding: 0.625rem 0.5rem;
           }
 
-          @media (max-width: 1024px) {
-            .navbar-container {
-              padding: 1.25rem 1.5rem;
-            }
-
-            .navbar-logo {
-              font-size: 2rem;
-              line-height: 2rem;
-            }
-
-            .navbar-glass-container {
-              overflow-x: auto;
-            }
+          .pill-navbar-overlay {
+            padding: 0.75rem 1rem;
+            border-radius: 40px;
           }
 
-          @media (max-width: 768px) {
-            .navbar-container {
-              padding: 1rem 1rem;
-            }
-
-            .navbar-logo {
-              font-size: 1.5rem;
-              line-height: 1.5rem;
-            }
-
-            .navbar-username {
-              display: none;
-            }
-
-            .navbar-logout-btn span {
-              display: none;
-            }
-
-            .navbar-tab {
-              font-size: 0.875rem;
-              padding: 0.5rem 1rem;
-            }
+          .pill-nav-content {
+            gap: 0.5rem;
           }
-        `}</style>
-      </header>
-    </>
+
+          .pill-nav-buttons {
+            gap: 0.375rem;
+          }
+
+          .pill-nav-button {
+            font-size: 1.125rem;
+            padding: 0.75rem 1.5rem;
+          }
+
+          .pill-profile-button {
+            width: 50px;
+            height: 50px;
+          }
+
+          .pill-profile-button svg {
+            width: 22px;
+            height: 22px;
+          }
+        }
+      `}</style>
+    </header>
   );
 };
 

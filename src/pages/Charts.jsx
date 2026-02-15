@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Download, ExternalLink, Loader2, Minus, TrendingDown, TrendingUp } from 'lucide-react';
+import { ExternalLink, Loader2 } from 'lucide-react';
 import { getTopAlbums, getTopArtists, getTopTracks } from '../services/lastfm';
 import { getSpotifyAlbumImage, getSpotifyArtistImage, getSpotifyTrackImage } from '../services/spotify';
 import { buildSearchQuery, getSpotifySearchUrl, getYouTubeSearchUrl } from '../utils/musicLinks';
 import { getLastFmImageUrl } from '../utils/lastfmImage.js';
 import { getCachedData, setCachedData } from '../utils/cache';
 
-const periods = [
+const PERIODS = [
   { value: '7day', label: '7 Days' },
   { value: '1month', label: '1 Month' },
   { value: '3month', label: '3 Months' },
@@ -15,190 +15,211 @@ const periods = [
   { value: 'overall', label: 'All Time' },
 ];
 
-const extractArtistName = (item) => item.artist?.name || item.artist?.['#text'] || '';
-const buildImageCacheKey = (item, type) => (type === 'artists' ? `artist:${item.name}` : `${type}:${item.name}:${extractArtistName(item)}`);
+const TABS = ['artists', 'albums', 'tracks'];
 
-export default function Charts({ username, initialTab = 'artists', lockTab = false, title = 'Top Charts', subtitle = 'Discover your most played music' }) {
+const getEntityKey = (tab) => {
+  if (tab === 'artists') return 'artist';
+  if (tab === 'albums') return 'album';
+  return 'track';
+};
+
+const extractArtistName = (item) => item.artist?.name || item.artist?.['#text'] || '';
+
+const getImageCacheKey = (item, type) => {
+  if (type === 'artists') return `artist:${item.name || ''}`;
+  return `${type}:${item.name || ''}:${extractArtistName(item)}`;
+};
+
+export default function Charts({
+  username,
+  initialTab = 'artists',
+  lockTab = false,
+  title = 'Top Charts',
+  subtitle = 'Discover your most played music',
+}) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [timePeriod, setTimePeriod] = useState('7day');
-  const [data, setData] = useState([]);
+  const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [spotifyImages, setSpotifyImages] = useState({});
 
   useEffect(() => {
-    setActiveTab(initialTab);
+    if (TABS.includes(initialTab)) {
+      setActiveTab(initialTab);
+    }
   }, [initialTab]);
 
   useEffect(() => {
     const onRange = (event) => {
-      const idx = periods.findIndex((option) => option.value === timePeriod);
-      const nextIndex = Math.min(periods.length - 1, Math.max(0, idx + Number(event.detail || 0)));
-      setTimePeriod(periods[nextIndex].value);
+      const delta = Number(event.detail || 0);
+      const index = PERIODS.findIndex((period) => period.value === timePeriod);
+      const next = Math.max(0, Math.min(PERIODS.length - 1, index + delta));
+      setTimePeriod(PERIODS[next].value);
     };
+
     window.addEventListener('music-scrobbler:range', onRange);
-    return () => window.removeEventListener('music-scrobbler:range', onRange);
+    return () => {
+      window.removeEventListener('music-scrobbler:range', onRange);
+    };
   }, [timePeriod]);
 
   useEffect(() => {
-    const fetchChartData = async () => {
+    let ignore = false;
+
+    const fetchCharts = async () => {
       setLoading(true);
+      const cacheKey = `charts:${username}:${activeTab}:${timePeriod}`;
+
       try {
         let result;
-        if (activeTab === 'artists') result = await getTopArtists(username, timePeriod, 50);
-        else if (activeTab === 'albums') result = await getTopAlbums(username, timePeriod, 50);
-        else result = await getTopTracks(username, timePeriod, 50);
+        if (activeTab === 'artists') {
+          result = await getTopArtists(username, timePeriod, 50);
+        } else if (activeTab === 'albums') {
+          result = await getTopAlbums(username, timePeriod, 50);
+        } else {
+          result = await getTopTracks(username, timePeriod, 50);
+        }
 
-        const list = result?.[activeTab === 'artists' ? 'artist' : activeTab === 'albums' ? 'album' : 'track'] || [];
-        setData(list);
-        setCachedData(`charts:${username}:${activeTab}:${timePeriod}`, list);
+        const entityKey = getEntityKey(activeTab);
+        const nextData = result?.[entityKey] || [];
+
+        if (!ignore) {
+          setChartData(nextData);
+          setCachedData(cacheKey, nextData);
+        }
       } catch {
-        const cached = getCachedData(`charts:${username}:${activeTab}:${timePeriod}`) || [];
-        setData(Array.isArray(cached) ? cached : []);
+        if (!ignore) {
+          const fallback = getCachedData(cacheKey);
+          setChartData(Array.isArray(fallback) ? fallback : []);
+        }
       } finally {
-        setLoading(false);
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchChartData();
+    fetchCharts();
+
+    return () => {
+      ignore = true;
+    };
   }, [activeTab, timePeriod, username]);
 
   useEffect(() => {
     let cancelled = false;
+
     const hydrateSpotifyImages = async () => {
-      const missingItems = data.filter((item) => {
+      const missingItems = chartData.filter((item) => {
         const hasLastFmImage = Boolean(getLastFmImageUrl(item.image));
-        const cacheKey = buildImageCacheKey(item, activeTab);
+        const cacheKey = getImageCacheKey(item, activeTab);
         return !hasLastFmImage && !spotifyImages[cacheKey];
       });
+
       if (!missingItems.length) return;
 
-      const resolved = await Promise.all(
+      const nextEntries = await Promise.all(
         missingItems.map(async (item) => {
           const artistName = extractArtistName(item);
-          const cacheKey = buildImageCacheKey(item, activeTab);
-          if (activeTab === 'artists') return [cacheKey, await getSpotifyArtistImage(item.name || '')];
-          if (activeTab === 'albums') return [cacheKey, await getSpotifyAlbumImage({ albumName: item.name || '', artistName })];
-          return [cacheKey, await getSpotifyTrackImage({ trackName: item.name || '', artistName })];
+          const cacheKey = getImageCacheKey(item, activeTab);
+
+          if (activeTab === 'artists') {
+            return [cacheKey, await getSpotifyArtistImage(item.name || '')];
+          }
+
+          if (activeTab === 'albums') {
+            return [
+              cacheKey,
+              await getSpotifyAlbumImage({ albumName: item.name || '', artistName }),
+            ];
+          }
+
+          return [
+            cacheKey,
+            await getSpotifyTrackImage({ trackName: item.name || '', artistName }),
+          ];
         }),
       );
 
       if (cancelled) return;
+
       setSpotifyImages((previous) => {
-        const next = { ...previous };
-        resolved.forEach(([cacheKey, imageUrl]) => {
-          if (imageUrl) next[cacheKey] = imageUrl;
+        const merged = { ...previous };
+        nextEntries.forEach(([key, imageUrl]) => {
+          if (imageUrl) merged[key] = imageUrl;
         });
-        return next;
+        return merged;
       });
     };
 
-    if (data.length > 0) hydrateSpotifyImages();
+    if (chartData.length) {
+      hydrateSpotifyImages();
+    }
+
     return () => {
       cancelled = true;
     };
-  }, [activeTab, data, spotifyImages]);
+  }, [activeTab, chartData, spotifyImages]);
 
-  const rows = useMemo(() => data.map((item, index) => {
-    const artistName = extractArtistName(item);
-    const query = buildSearchQuery({ type: activeTab, name: item.name, artist: artistName });
-    const cacheKey = buildImageCacheKey(item, activeTab);
-    const imageUrl = getLastFmImageUrl(item.image) || spotifyImages[cacheKey] || '';
-    const simulatedChange = Math.random() * 10 - 5;
-    const changeIcon = simulatedChange > 2
-      ? <TrendingUp className="w-4 h-4 text-emerald-500" />
-      : simulatedChange < -2
-        ? <TrendingDown className="w-4 h-4 text-rose-500" />
-        : <Minus className="w-4 h-4 text-muted" />;
+  const rows = useMemo(
+    () =>
+      chartData.map((item, index) => {
+        const artistName = extractArtistName(item);
+        const query = buildSearchQuery({ type: activeTab, name: item.name, artist: artistName });
+        const cacheKey = getImageCacheKey(item, activeTab);
 
-    return {
-      key: `${item.name}-${artistName}-${index}`,
-      rank: index + 1,
-      item,
-      artistName,
-      imageUrl,
-      spotifyUrl: getSpotifySearchUrl(query),
-      youTubeUrl: getYouTubeSearchUrl(query),
-      changeIcon,
-    };
-  }), [activeTab, data, spotifyImages]);
-
-  const exportPng = () => {
-    const width = 1200;
-    const rowHeight = 34;
-    const height = Math.max(200, 100 + Math.min(rows.length, 30) * rowHeight);
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#F2C7C7';
-    ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = '#FFB7C5';
-    ctx.font = 'bold 28px Inter, sans-serif';
-    ctx.fillText(`Music Scrobbler ${activeTab} (${timePeriod})`, 30, 44);
-    ctx.fillStyle = '#1F1F1F';
-    ctx.font = '16px Krub, sans-serif';
-    rows.slice(0, 30).forEach((row, index) => {
-      const y = 80 + index * rowHeight;
-      ctx.fillText(`#${row.rank}  ${row.item.name} — ${row.artistName} (${row.item.playcount || 0})`, 30, y);
-    });
-
-    const link = document.createElement('a');
-    link.href = canvas.toDataURL('image/png');
-    link.download = `${username || 'listener'}-${activeTab}-${timePeriod}.png`;
-    link.click();
-  };
-
-  const exportCsv = () => {
-    const csvRows = [
-      ['Rank', 'Name', 'Artist', 'Playcount'],
-      ...rows.map((row) => [row.rank, row.item.name || '', row.artistName || '', row.item.playcount || '']),
-    ];
-    const csv = csvRows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${username || 'listener'}-${activeTab}-${timePeriod}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
+        return {
+          key: `${activeTab}-${item.name || 'unknown'}-${artistName}-${index}`,
+          rank: index + 1,
+          name: item.name || 'Unknown',
+          artistName,
+          plays: Number(item.playcount || 0),
+          imageUrl: getLastFmImageUrl(item.image) || spotifyImages[cacheKey] || '',
+          spotifyUrl: getSpotifySearchUrl(query),
+          youTubeUrl: getYouTubeSearchUrl(query),
+        };
+      }),
+    [activeTab, chartData, spotifyImages],
+  );
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] p-8 relative">
-      {/* Header with title and controls */}
-      <div className="flex items-start justify-between mb-12">
+    <div className="min-h-screen bg-[#F5F5F5] p-8">
+      <header className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="text-[120px] font-bold text-black leading-none mb-0" style={{ fontFamily: 'Inter, sans-serif' }}>
-            Top<br />Charts
-          </h1>
+          <h1 className="text-4xl font-bold text-black md:text-6xl">{title}</h1>
+          <p className="mt-2 text-sm text-gray-600 md:text-base">{subtitle}</p>
         </div>
 
-        <div className="flex flex-col gap-3 pt-2">
-          {!lockTab && (
-            <>
-              {['artists', 'albums', 'tracks'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-8 py-3 rounded-full text-lg transition-all ${
-                    activeTab === tab
-                      ? 'bg-gray-200 text-black shadow-sm'
-                      : 'bg-white text-black border-2 border-gray-200 hover:bg-gray-50'
-                  }`}
-                  style={{ fontFamily: 'Inter, sans-serif', minWidth: '160px' }}
-                >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                </button>
-              ))}
-            </>
-          )}
+        <div className="flex flex-wrap gap-2">
+          {!lockTab &&
+            TABS.map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition md:text-base ${
+                  activeTab === tab
+                    ? 'bg-black text-white'
+                    : 'bg-white text-black ring-1 ring-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {tab[0].toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
         </div>
-      </div>
+      </header>
 
-      {/* Time Period Selector - Hidden for now to match design */}
-      <div className="hidden">
-        <select value={timePeriod} onChange={(e) => setTimePeriod(e.target.value)}>
-          {periods.map((period) => (
+      <div className="mb-6 flex items-center justify-between">
+        <label className="text-sm text-gray-600" htmlFor="chart-period">
+          Time period
+        </label>
+        <select
+          id="chart-period"
+          value={timePeriod}
+          onChange={(event) => setTimePeriod(event.target.value)}
+          className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm"
+        >
+          {PERIODS.map((period) => (
             <option key={period.value} value={period.value}>
               {period.label}
             </option>
@@ -206,118 +227,63 @@ export default function Charts({ username, initialTab = 'artists', lockTab = fal
         </select>
       </div>
 
-      {/* Export Buttons - Hidden for now to match design */}
-      <div className="hidden">
-        <button onClick={exportPng}>Export PNG</button>
-        <button onClick={exportCsv}>Export CSV</button>
-      </div>
-
       {loading ? (
-  <div className="flex flex-col items-start py-20">
-    <Loader2 className="w-10 h-10 text-black animate-spin mb-3" />
-    <p className="text-black text-sm" style={{ fontFamily: 'Inter, sans-serif' }}>
-      Loading your charts...
-    </p>
-  </div>
-) : (
-
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5 px-6 mt-10 items-start">
-
-    {rows.map((row) => (
-
-      <article
-        key={row.key}
-        className="
-  flex items-center justify-between
-  bg-[#EDEDED]
-  rounded-full
-  px-5 py-2
-  hover:shadow-sm
-  transition-all
-  w-full
-  max-w-[520px]
-"
-      >
-
-        {/* LEFT SIDE */}
-        <div className="flex items-center gap-3">
-
-          {/* RANK */}
-          <span
-            className="text-lg font-semibold w-5"
-            style={{ fontFamily: 'Inter, sans-serif' }}
-          >
-            {row.rank}
-          </span>
-
-          {/* IMAGE */}
-          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gray-300">
-
-  {row.imageUrl && (
-    <img
-      src={row.imageUrl}
-      alt={row.item.name}
-      className="w-full h-full object-cover"
-    />
-  )}
-
-</div>
-
-  
-           : (
-            <div className="w-10 h-10 rounded-full bg-gray-300" />
-          )
-
-          {/* NAME + PLAYS */}
-          <div>
-            <h3
-              className="text-base leading-none"
-              style={{ fontFamily: 'Inter, sans-serif' }}
-            >
-              {row.item.name}
-            </h3>
-
-            <p
-              className="text-xs text-gray-500"
-              style={{ fontFamily: 'Krub, sans-serif' }}
-            >
-              {Number(row.item.playcount || 0).toLocaleString()} plays
-            </p>
-          </div>
-
+        <div className="flex items-center gap-2 py-20 text-gray-600">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>Loading your charts…</span>
         </div>
+      ) : rows.length === 0 ? (
+        <p className="py-20 text-sm text-gray-600">No chart data available for this range yet.</p>
+      ) : (
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          {rows.map((row) => (
+            <article
+              key={row.key}
+              className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-gray-100"
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="w-8 text-center text-sm font-semibold text-gray-500">#{row.rank}</span>
 
-        {/* RIGHT SIDE LINKS */}
-        <div
-          className="flex gap-3 text-xs"
-          style={{ fontFamily: 'Krub, sans-serif' }}
-        >
-          <a
-            href={row.youTubeUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#FFB7C5] hover:underline"
-          >
-            YouTube
-          </a>
+                {row.imageUrl ? (
+                  <img
+                    src={row.imageUrl}
+                    alt={row.name}
+                    className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-12 w-12 flex-shrink-0 rounded-full bg-gray-200" />
+                )}
 
-          <a
-            href={row.spotifyUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[#D5F3D8] hover:underline"
-          >
-            Spotify
-          </a>
+                <div className="min-w-0">
+                  <h3 className="truncate text-sm font-semibold text-black">{row.name}</h3>
+                  <p className="truncate text-xs text-gray-500">
+                    {activeTab === 'artists' ? `${row.plays.toLocaleString()} plays` : `${row.artistName} • ${row.plays.toLocaleString()} plays`}
+                  </p>
+                </div>
+              </div>
+
+              <div className="ml-3 flex items-center gap-2 text-xs">
+                <a
+                  href={row.youTubeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-1 text-rose-700 hover:bg-rose-100"
+                >
+                  YouTube <ExternalLink className="h-3 w-3" />
+                </a>
+                <a
+                  href={row.spotifyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700 hover:bg-emerald-100"
+                >
+                  Spotify <ExternalLink className="h-3 w-3" />
+                </a>
+              </div>
+            </article>
+          ))}
         </div>
-
-      </article>
-
-    ))}
-
-  </div>
-
-)}
+      )}
     </div>
   );
 }
