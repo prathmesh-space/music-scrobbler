@@ -8,6 +8,7 @@ const Navbar = ({ username }) => {
   const navItems = [
     { label: 'Home', path: '/' },
     { label: 'Charts', path: '/charts' },
+    { label: 'PlaylistGenerator', path: '/playlist-generator' },
     { label: 'Recognize', path: '/recognition' },
     { label: 'Friends', path: '/friends' },
     { label: 'Discovery', path: '/discovery' },

@@ -12,3 +12,4 @@ export { default as Profile } from './Profile';
 export { default as Recognition } from './SongRecognition';
 export { default as Recommendations } from './Recommendations';
 export { default as Statistics } from './Statistics';
+export { default as PlaylistGenerator } from './PlaylistGenerator';

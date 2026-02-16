@@ -80,6 +80,14 @@ const routeDefinitions = [
     mobileLabel: 'Discover',
     description: 'Explore related artists and deep cuts.',
   },
+  {
+    path: '/playlist-generator',
+    pageKey: 'PlaylistGenerator',
+    withUsername: true,
+    label: 'Playlist Generator',
+    mobileLabel: 'Playlist',
+    description: 'Generate AI-curated playlists based on your listening habits.',
+  },
 ];
 
 export const authenticatedRoutes = routeDefinitions.map(({ path, pageKey, withUsername }) => ({

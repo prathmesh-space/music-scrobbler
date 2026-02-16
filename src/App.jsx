@@ -16,6 +16,7 @@ import {
   Profile,
   Recommendations,
   Statistics,
+  PlaylistGenerator,
 } from './pages';
 import SongRecognition from './pages/SongRecognition';
 import { authenticatedRoutes } from './config/routes';
@@ -43,6 +44,7 @@ const pageComponents = {
   Recommendations,
   ListeningGoals,
   DiscoveryLab,
+  PlaylistGenerator,
   Recognition: SongRecognition,
 };
 
