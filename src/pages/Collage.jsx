@@ -153,18 +153,31 @@ const Collage = ({ username, embedded = false }) => {
   const selectedTypeLabel = collageTypes.find((type) => type.value === collageType)?.label || 'Albums';
 
   return (
-    <div className={embedded ? "" : "page-shell"}>
-      <div className="page-container page-container--compact">
-        <h1 className="mb-8 text-4xl font-bold text-white">Music Collage Generator</h1>
+    <div className={embedded ? "" : "min-h-screen p-8"} style={{ background: embedded ? 'transparent' : 'transparent' }}>
+      <div className="mx-auto max-w-6xl">
+        {!embedded && (
+          <header className="mb-8">
+            <h1 className="font-['Amiri_Quran'] text-7xl font-normal text-[#3E3D1A] md:text-8xl">
+              Collage
+            </h1>
+            <p className="mt-3 font-['Inter_Display'] text-lg font-light text-[#2D2D2D] md:text-xl">
+              Create beautiful collages from your music taste
+            </p>
+          </header>
+        )}
 
-        <div className="mb-8 rounded-lg border border-gray-700 bg-gray-800 p-6">
+        {/* Controls Section */}
+        <div className="mb-8 rounded-[30px] bg-white/70 p-6 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            {/* Collage Type */}
             <div>
-              <label className="mb-3 block font-semibold text-gray-400">Collage Type</label>
+              <label className="mb-3 block font-['Inter'] text-sm font-semibold text-[#3E3D1A]/70">
+                Collage Type
+              </label>
               <select
                 value={collageType}
                 onChange={(e) => setCollageType(e.target.value)}
-                className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-3 text-white focus:border-purple-500 focus:outline-none"
+                className="w-full rounded-[20px] border-2 border-[#CFD0B9] bg-white px-5 py-3 font-['Inter'] text-base text-[#3E3D1A] shadow-sm transition-all focus:border-[#6B5A2A] focus:outline-none focus:ring-2 focus:ring-[#6B5A2A]/20"
               >
                 {collageTypes.map((type) => (
                   <option key={type.value} value={type.value}>
@@ -174,32 +187,37 @@ const Collage = ({ username, embedded = false }) => {
               </select>
             </div>
 
+            {/* Grid Size */}
             <div>
-              <label className="mb-3 block font-semibold text-gray-400">Grid Size</label>
-              <div className="flex gap-3">
+              <label className="mb-3 block font-['Inter'] text-sm font-semibold text-[#3E3D1A]/70">
+                Grid Size
+              </label>
+              <div className="flex gap-2">
                 {gridSizes.map((size) => (
                   <button
                     key={size}
                     onClick={() => setGridSize(size)}
-                    className={`flex-1 rounded-lg px-4 py-3 font-semibold transition ${
+                    className={`flex-1 rounded-[20px] px-4 py-3 font-['Inter'] text-sm font-semibold transition-all ${
                       gridSize === size
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        ? 'bg-[#6B5A2A] text-white shadow-md'
+                        : 'bg-[#EECEA4]/30 text-[#3E3D1A] hover:bg-[#EECEA4]/50'
                     }`}
                   >
-                    <Grid3x3 className="mr-2 inline h-5 w-5" />
                     {size}
                   </button>
                 ))}
               </div>
             </div>
 
+            {/* Time Period */}
             <div>
-              <label className="mb-3 block font-semibold text-gray-400">Time Period</label>
+              <label className="mb-3 block font-['Inter'] text-sm font-semibold text-[#3E3D1A]/70">
+                Time Period
+              </label>
               <select
                 value={timePeriod}
                 onChange={(e) => setTimePeriod(e.target.value)}
-                className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-3 text-white focus:border-purple-500 focus:outline-none"
+                className="w-full rounded-[20px] border-2 border-[#CFD0B9] bg-white px-5 py-3 font-['Inter'] text-base text-[#3E3D1A] shadow-sm transition-all focus:border-[#6B5A2A] focus:outline-none focus:ring-2 focus:ring-[#6B5A2A]/20"
               >
                 {periods.map((period) => (
                   <option key={period.value} value={period.value}>
@@ -210,33 +228,37 @@ const Collage = ({ username, embedded = false }) => {
             </div>
           </div>
 
+          {/* Generate Button */}
           <button
             onClick={generateCollage}
             disabled={loading || generating}
-            className="mt-6 flex w-full items-center justify-center space-x-2 rounded-lg bg-purple-600 py-4 font-bold text-white transition hover:bg-purple-700 disabled:bg-gray-600"
+            className="mt-6 flex w-full items-center justify-center gap-3 rounded-[25px] bg-[#6B5A2A] py-4 font-['Inter'] text-lg font-semibold text-white shadow-md transition-all hover:bg-[#55491A] disabled:bg-[#CFD0B9] disabled:text-[#6B5A2A]/50"
           >
             {loading || generating ? (
               <>
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Loader2 className="h-6 w-6 animate-spin" />
                 <span>{generating ? 'Generating...' : `Loading ${selectedTypeLabel.toLowerCase()}...`}</span>
               </>
             ) : (
               <>
-                <Grid3x3 className="h-5 w-5" />
+                <Grid3x3 className="h-6 w-6" />
                 <span>Generate Collage</span>
               </>
             )}
           </button>
         </div>
 
+        {/* Collage Display */}
         {items.length > 0 && (
-          <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-white">Your {selectedTypeLabel} Collage</h2>
+          <div className="rounded-[30px] bg-white/70 p-6 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="font-['Amiri_Quran'] text-4xl font-normal text-[#3E3D1A]">
+                Your {selectedTypeLabel} Collage
+              </h2>
               <button
                 onClick={downloadCollage}
                 disabled={generating}
-                className="flex items-center space-x-2 rounded-lg bg-green-600 px-6 py-2 font-semibold text-white transition hover:bg-green-700 disabled:bg-gray-600"
+                className="flex items-center justify-center gap-2 rounded-[25px] bg-green-600 px-6 py-3 font-['Inter'] text-base font-semibold text-white shadow-md transition-all hover:bg-green-700 disabled:bg-[#CFD0B9] disabled:text-[#6B5A2A]/50"
               >
                 <Download className="h-5 w-5" />
                 <span>Download PNG</span>
@@ -246,22 +268,27 @@ const Collage = ({ username, embedded = false }) => {
             <div className="flex justify-center">
               <canvas
                 ref={canvasRef}
-                className="h-auto max-w-full rounded-lg border border-gray-600 shadow-2xl"
+                className="h-auto max-w-full rounded-[20px] shadow-2xl ring-2 ring-[#CFD0B9]/50"
               />
             </div>
 
-            <p className="mt-4 text-center text-gray-400">
-              {gridSize} collage from your top {selectedTypeLabel.toLowerCase()} ({timePeriod})
+            <p className="mt-6 text-center font-['Inter'] text-base text-[#6B5A2A]">
+              {gridSize} collage from your top {selectedTypeLabel.toLowerCase()} ({periods.find(p => p.value === timePeriod)?.label})
             </p>
           </div>
         )}
 
+        {/* Empty State */}
         {items.length === 0 && !loading && (
-          <div className="rounded-lg border border-gray-700 bg-gray-800 p-8 text-center">
-            <Grid3x3 className="mx-auto mb-4 h-16 w-16 text-gray-600" />
-            <h3 className="mb-2 text-xl font-semibold text-white">No Collage Yet</h3>
-            <p className="text-gray-400">
-              Pick artists, albums, or tracks, then choose a grid and time period to generate a collage.
+          <div className="rounded-[30px] bg-white/70 p-12 text-center shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30">
+            <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-[#EECEA4]/30">
+              <Grid3x3 className="h-12 w-12 text-[#6B5A2A]" />
+            </div>
+            <h3 className="mb-3 font-['Amiri_Quran'] text-3xl font-normal text-[#3E3D1A]">
+              No Collage Yet
+            </h3>
+            <p className="font-['Inter'] text-base text-[#6B5A2A]">
+              Pick artists, albums, or tracks, then choose a grid and time period to generate your collage
             </p>
           </div>
         )}

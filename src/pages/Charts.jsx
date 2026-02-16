@@ -192,7 +192,7 @@ export default function Charts({
         {/* Header */}
         <header className="mb-8 flex flex-col gap-5">
           <div>
-            <h1 className="font-['Amiri_Quran'] text-5xl font-normal text-[#3E3D1A] md:text-7xl">
+            <h1 className="font-['Amiri_Quran'] text-7xl font-normal text-[#3E3D1A] md:text-8xl">
               {title}
             </h1>
             <p className="mt-3 font-['Inter_Display'] text-lg font-light text-[#2D2D2D] md:text-xl">
@@ -221,105 +221,195 @@ export default function Charts({
 
         {activeSection === 'charts' ? (
           <>
-            {/* Controls */}
-            <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-              {/* Tab Buttons */}
-              <div className="flex flex-wrap gap-3">
-                {!lockTab &&
-                  TABS.map((tab) => (
-                    <button
-                      key={tab}
-                      type="button"
-                      onClick={() => setActiveTab(tab)}
-                      className={`rounded-[59px] px-6 py-3 text-base font-normal transition-all duration-300 ${
-                        activeTab === tab
-                          ? 'bg-[#EECEA4] text-[#3E3D1A] shadow-[0_4px_4px_rgba(0,0,0,0.25)]'
-                          : 'bg-[#55491A] text-[#CFD0B9] hover:bg-[#6B5A2A]'
-                      }`}
-                    >
-                      {tab[0].toUpperCase() + tab.slice(1)}
-                    </button>
-                  ))}
-              </div>
+            {/* 🔥 CHANGE 2: Bigger Buttons 🔥 */}
+            <div className="mb-8 flex flex-wrap items-center gap-4">
+              {/* Tab Buttons - BIGGER */}
+              {!lockTab &&
+                TABS.map((tab) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setActiveTab(tab)}
+                    className={`rounded-[59px] px-8 py-4 text-lg font-normal transition-all duration-300 ${
+                      activeTab === tab
+                        ? 'bg-[#EECEA4] text-[#3E3D1A] shadow-[0_4px_4px_rgba(0,0,0,0.25)]'
+                        : 'bg-[#55491A] text-[#CFD0B9] hover:bg-[#6B5A2A]'
+                    }`}
+                  >
+                    {tab[0].toUpperCase() + tab.slice(1)}
+                  </button>
+                ))}
 
-              {/* Time Period Selector */}
-              <div className="flex items-center gap-3">
-                <label 
-                  className="font-['Inter'] text-sm font-light text-[#3E3D1A]" 
-                  htmlFor="chart-period"
-                >
-                  Time period
-                </label>
-                <select
-                  id="chart-period"
-                  value={timePeriod}
-                  onChange={(event) => setTimePeriod(event.target.value)}
-                  className="rounded-[20px] border-2 border-[#CFD0B9] bg-white px-4 py-2 text-sm text-[#3E3D1A] shadow-sm transition-all focus:border-[#EECEA4] focus:outline-none focus:ring-2 focus:ring-[#EECEA4]/50"
-                >
-                  {PERIODS.map((period) => (
-                    <option key={period.value} value={period.value}>
-                      {period.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* Time Period Selector - BIGGER */}
+              <select
+                value={timePeriod}
+                onChange={(event) => setTimePeriod(event.target.value)}
+                className="rounded-[59px] border-2 border-[#CFD0B9] bg-[#55491A] px-8 py-4 text-lg font-normal text-[#CFD0B9] shadow-sm transition-all hover:bg-[#6B5A2A] focus:border-[#EECEA4] focus:outline-none focus:ring-2 focus:ring-[#EECEA4]/50"
+              >
+                {PERIODS.map((period) => (
+                  <option key={period.value} value={period.value}>
+                    {period.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* 🔥 NEW: Grid Layout with Sidebar 🔥 */}
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            {/* 50-50 Split */}
+            <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start', height: 'calc(100vh - 22rem)' }}>
               
-              {/* LEFT: Charts Section (2/3 width) */}
-              <div className="lg:col-span-2">
+              {/* LEFT: Charts Section - 50% */}
+              <div style={{ 
+                flex: '1 1 50%', 
+                minWidth: '0',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column'
+              }}>
                 {loading ? (
-                  <div className="flex items-center justify-center gap-3 py-20">
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.75rem',
+                    padding: '5rem 0',
+                    height: '100%'
+                  }}>
                     <Loader2 className="h-6 w-6 animate-spin text-[#6B5A2A]" />
                     <span className="font-['Inter'] text-lg text-[#3E3D1A]">
                       Loading your charts…
                     </span>
                   </div>
                 ) : rows.length === 0 ? (
-                  <p className="py-20 text-center font-['Inter'] text-base text-[#6B5A2A]">
+                  <p style={{
+                    padding: '5rem 0',
+                    textAlign: 'center',
+                    fontFamily: 'Inter',
+                    fontSize: '1rem',
+                    color: '#6B5A2A',
+                    height: '100%'
+                  }}>
                     No chart data available for this range yet.
                   </p>
                 ) : (
-                  <div className="scrollable-list-container">
+                  <div 
+                    style={{ 
+                      height: '100%',
+                      overflowY: 'auto',
+                      overflowX: 'hidden',
+                      backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                      padding: '1.25rem',
+                      borderRadius: '25px',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(207, 208, 185, 0.3)'
+                    }}
+                  >
+                    {/* 🔥 CHANGE 1: Bigger List Cards 🔥 */}
                     {rows.slice(0, 50).map((row) => (
                       <article
                         key={row.key}
-                        className="scrollable-list-item"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '1.25rem',
+                          padding: '1.25rem',
+                          marginBottom: '0.75rem',
+                          backgroundColor: 'rgba(238, 206, 164, 0.3)',
+                          borderRadius: '18px',
+                          transition: 'all 0.2s'
+                        }}
                       >
-                        <div className="scrollable-list-rank">{row.rank}</div>
+                        <div style={{
+                          fontSize: '1.5rem',
+                          fontWeight: '700',
+                          color: '#3E3D1A',
+                          minWidth: '3rem',
+                          textAlign: 'center'
+                        }}>
+                          {row.rank}
+                        </div>
 
-                        <div className="scrollable-list-content">
-                          <div className="scrollable-list-info">
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          flex: '1',
+                          gap: '1.25rem'
+                        }}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1rem',
+                            flex: '1',
+                            minWidth: '0'
+                          }}>
                             {row.imageUrl && (
                               <img
                                 src={row.imageUrl}
                                 alt={row.name}
-                                className="scrollable-list-image"
+                                style={{
+                                  width: '64px',
+                                  height: '64px',
+                                  borderRadius: '10px',
+                                  objectFit: 'cover',
+                                  flexShrink: '0'
+                                }}
                               />
                             )}
-                            <div className="scrollable-list-text">
-                              <h3 className="scrollable-list-name">{row.name}</h3>
-                              <p className="scrollable-list-plays">
+                            <div style={{
+                              minWidth: '0',
+                              overflow: 'hidden'
+                            }}>
+                              <h3 style={{
+                                fontFamily: 'Inter',
+                                fontSize: '1.1rem',
+                                fontWeight: '600',
+                                color: '#3E3D1A',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                {row.name}
+                              </h3>
+                              <p style={{
+                                fontFamily: 'Inter',
+                                fontSize: '0.95rem',
+                                color: '#6B5A2A',
+                                marginTop: '0.35rem'
+                              }}>
                                 Plays {row.plays.toLocaleString()}
                               </p>
                             </div>
                           </div>
 
-                          <div className="scrollable-list-links">
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            fontSize: '0.85rem',
+                            fontFamily: 'Inter',
+                            flexShrink: '0'
+                          }}>
                             <a
                               href={row.youTubeUrl}
                               target="_blank"
                               rel="noopener noreferrer"
+                              style={{
+                                color: '#6B5A2A',
+                                textDecoration: 'none'
+                              }}
                             >
                               youtube
                             </a>
-                            <span>/</span>
+                            <span style={{ color: '#6B5A2A' }}>/</span>
                             <a
                               href={row.spotifyUrl}
                               target="_blank"
                               rel="noopener noreferrer"
+                              style={{
+                                color: '#6B5A2A',
+                                textDecoration: 'none'
+                              }}
                             >
                               spotify
                             </a>
@@ -331,16 +421,32 @@ export default function Charts({
                 )}
               </div>
 
-              {/* RIGHT: Statistics Sidebar (1/3 width) */}
-<div className="lg:col-span-1">
-  <div className="sticky top-24">
-    <Statistics username={username} embedded />
-  </div>
-</div>
+              {/* RIGHT: Statistics Sidebar - 50% */}
+              <div style={{ 
+                flex: '1 1 50%', 
+                minWidth: '0',
+                height: '100%'
+              }}>
+                <div 
+                  style={{ 
+                    height: '100%',
+                    overflowY: 'auto',
+                    overflowX: 'hidden',
+                    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                    padding: '1rem',
+                    borderRadius: '25px',
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(207, 208, 185, 0.3)'
+                  }}
+                >
+                  <Statistics username={username} embedded />
+                </div>
+              </div>
             </div>
           </>
         ) : activeSection === 'statistics' ? (
-          <Statistics username={username} embedded />
+          <Statistics username={username} embedded={false} />
         ) : (
           <Collage username={username} embedded />
         )}

@@ -110,12 +110,12 @@ const Statistics = ({ username, embedded = false }) => {
   if (loading) {
     return (
       <div 
-        className={`flex items-center justify-center ${embedded ? 'py-20' : 'min-h-screen'}`}
+        className={`flex items-center justify-center ${embedded ? 'py-12' : 'min-h-screen'}`}
         style={{ background: 'transparent' }}
       >
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-12 w-12 animate-spin text-[#6B5A2A]" />
-          <p className="font-['Inter'] text-lg text-[#3E3D1A]">Loading statistics...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-[#6B5A2A]" />
+          <p className="font-['Inter'] text-sm text-[#3E3D1A]">Loading statistics...</p>
         </div>
       </div>
     );
@@ -123,10 +123,10 @@ const Statistics = ({ username, embedded = false }) => {
 
   return (
     <div 
-      className={`${embedded ? '' : 'min-h-screen py-8'} px-4`}
+      className={`${embedded ? '' : 'min-h-screen py-8'} ${embedded ? '' : 'px-4'}`}
       style={{ background: 'transparent' }}
     >
-      <div className="mx-auto max-w-7xl">
+      <div className={embedded ? '' : 'mx-auto max-w-7xl'}>
         {!embedded && (
           <h1 className="mb-8 font-['Amiri_Quran'] text-6xl font-normal text-[#3E3D1A]">
             Statistics Dashboard
@@ -134,92 +134,93 @@ const Statistics = ({ username, embedded = false }) => {
         )}
 
         {/* Summary Cards */}
-        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className={`${embedded ? 'mb-4' : 'mb-8'} grid grid-cols-1 gap-3`}>
           {/* Total Scrobbles */}
-          <div className="rounded-[25px] bg-gradient-to-br from-[#EECEA4]/40 to-[#FFE5D9]/30 p-6 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30">
-            <div className="mb-3 flex items-center gap-3">
-              <div className="rounded-full bg-white/50 p-2">
-                <Music className="h-5 w-5 text-[#3E3D1A]" />
+          <div className="rounded-[20px] bg-gradient-to-br from-[#EECEA4]/40 to-[#FFE5D9]/30 p-4 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30">
+            <div className="mb-2 flex items-center gap-2">
+              <div className="rounded-full bg-white/50 p-1.5">
+                <Music className="h-4 w-4 text-[#3E3D1A]" />
               </div>
-              <span className="font-['Inter'] text-sm font-medium text-[#3E3D1A]/70">
+              <span className="font-['Inter'] text-xs font-medium text-[#3E3D1A]/70">
                 Total Scrobbles
               </span>
             </div>
-            <p className="font-['Inter'] text-4xl font-bold text-[#3E3D1A]">
+            <p className="font-['Inter'] text-3xl font-bold text-[#3E3D1A]">
               {stats.totalScrobbles.toLocaleString()}
             </p>
-            <p className="mt-2 font-['Inter'] text-xs font-light text-[#3E3D1A]/60">
+            <p className="mt-1 font-['Inter'] text-[10px] font-light text-[#3E3D1A]/60">
               Last 200 tracks
             </p>
           </div>
 
           {/* Daily Average */}
-          <div className="rounded-[25px] bg-gradient-to-br from-[#E0F5F0]/50 to-[#C8E6D7]/30 p-6 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30">
-            <div className="mb-3 flex items-center gap-3">
-              <div className="rounded-full bg-white/50 p-2">
-                <Calendar className="h-5 w-5 text-[#3E3D1A]" />
+          <div className="rounded-[20px] bg-gradient-to-br from-[#E0F5F0]/50 to-[#C8E6D7]/30 p-4 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30">
+            <div className="mb-2 flex items-center gap-2">
+              <div className="rounded-full bg-white/50 p-1.5">
+                <Calendar className="h-4 w-4 text-[#3E3D1A]" />
               </div>
-              <span className="font-['Inter'] text-sm font-medium text-[#3E3D1A]/70">
+              <span className="font-['Inter'] text-xs font-medium text-[#3E3D1A]/70">
                 Daily Average
               </span>
             </div>
-            <p className="font-['Inter'] text-4xl font-bold text-[#3E3D1A]">
+            <p className="font-['Inter'] text-3xl font-bold text-[#3E3D1A]">
               {Math.round(
                 stats.dailyScrobbles.reduce((sum, day) => sum + day.scrobbles, 0) / 7
               )}
             </p>
-            <p className="mt-2 font-['Inter'] text-xs font-light text-[#3E3D1A]/60">
+            <p className="mt-1 font-['Inter'] text-[10px] font-light text-[#3E3D1A]/60">
               Last 7 days
             </p>
           </div>
 
           {/* Top Genre */}
-          <div className="rounded-[25px] bg-gradient-to-br from-[#E8E0F5]/50 to-[#CFD0B9]/20 p-6 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30">
-            <div className="mb-3 flex items-center gap-3">
-              <div className="rounded-full bg-white/50 p-2">
-                <TrendingUp className="h-5 w-5 text-[#3E3D1A]" />
+          <div className="rounded-[20px] bg-gradient-to-br from-[#E8E0F5]/50 to-[#CFD0B9]/20 p-4 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30">
+            <div className="mb-2 flex items-center gap-2">
+              <div className="rounded-full bg-white/50 p-1.5">
+                <TrendingUp className="h-4 w-4 text-[#3E3D1A]" />
               </div>
-              <span className="font-['Inter'] text-sm font-medium text-[#3E3D1A]/70">
+              <span className="font-['Inter'] text-xs font-medium text-[#3E3D1A]/70">
                 Top Genre
               </span>
             </div>
-            <p className="font-['Inter'] text-4xl font-bold text-[#3E3D1A]">
+            <p className="font-['Inter'] text-3xl font-bold text-[#3E3D1A]">
               {stats.topGenres[0]?.name || 'N/A'}
             </p>
-            <p className="mt-2 font-['Inter'] text-xs font-light text-[#3E3D1A]/60">
+            <p className="mt-1 font-['Inter'] text-[10px] font-light text-[#3E3D1A]/60">
               Most listened
             </p>
           </div>
         </div>
 
         {/* Charts Grid */}
-        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className={`${embedded ? 'mb-4 space-y-4' : 'mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2'}`}>
           {/* Daily Scrobbles Line Chart */}
-          <div className="rounded-[30px] bg-white/70 p-6 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30">
-            <h2 className="mb-4 font-['Amiri_Quran'] text-2xl font-normal text-[#3E3D1A]">
+          <div className="rounded-[25px] bg-white/70 p-4 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30">
+            <h2 className={`${embedded ? 'mb-2' : 'mb-4'} font-['Amiri_Quran'] ${embedded ? 'text-xl' : 'text-2xl'} font-normal text-[#3E3D1A]`}>
               Daily Scrobbles
             </h2>
-            <p className="mb-4 font-['Inter'] text-sm font-light text-[#6B5A2A]">
+            <p className={`${embedded ? 'mb-2' : 'mb-4'} font-['Inter'] text-xs font-light text-[#6B5A2A]`}>
               Last 7 days
             </p>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={embedded ? 200 : 300}>
               <LineChart data={stats.dailyScrobbles}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#CFD0B9" />
                 <XAxis 
                   dataKey="date" 
                   stroke="#6B5A2A"
-                  style={{ fontSize: '12px', fontFamily: 'Inter' }}
+                  style={{ fontSize: '10px', fontFamily: 'Inter' }}
                 />
                 <YAxis 
                   stroke="#6B5A2A"
-                  style={{ fontSize: '12px', fontFamily: 'Inter' }}
+                  style={{ fontSize: '10px', fontFamily: 'Inter' }}
                 />
                 <Tooltip
                   contentStyle={{ 
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
                     border: '1px solid #CFD0B9',
                     borderRadius: '12px',
-                    fontFamily: 'Inter'
+                    fontFamily: 'Inter',
+                    fontSize: '11px'
                   }}
                   labelStyle={{ color: '#3E3D1A', fontWeight: 600 }}
                 />
@@ -227,23 +228,23 @@ const Statistics = ({ username, embedded = false }) => {
                   type="monotone" 
                   dataKey="scrobbles" 
                   stroke="#6B5A2A" 
-                  strokeWidth={3}
-                  dot={{ fill: '#EECEA4', r: 5 }}
-                  activeDot={{ r: 7 }}
+                  strokeWidth={2}
+                  dot={{ fill: '#EECEA4', r: 4 }}
+                  activeDot={{ r: 5 }}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
 
           {/* Genre Distribution Pie Chart */}
-          <div className="rounded-[30px] bg-white/70 p-6 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30">
-            <h2 className="mb-4 font-['Amiri_Quran'] text-2xl font-normal text-[#3E3D1A]">
+          <div className="rounded-[25px] bg-white/70 p-4 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30">
+            <h2 className={`${embedded ? 'mb-2' : 'mb-4'} font-['Amiri_Quran'] ${embedded ? 'text-xl' : 'text-2xl'} font-normal text-[#3E3D1A]`}>
               Genre Distribution
             </h2>
-            <p className="mb-4 font-['Inter'] text-sm font-light text-[#6B5A2A]">
+            <p className={`${embedded ? 'mb-2' : 'mb-4'} font-['Inter'] text-xs font-light text-[#6B5A2A]`}>
               Your music taste
             </p>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={embedded ? 200 : 300}>
               <PieChart>
                 <Pie
                   data={stats.topGenres}
@@ -251,9 +252,10 @@ const Statistics = ({ username, embedded = false }) => {
                   cy="50%"
                   labelLine={false}
                   label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={90}
+                  outerRadius={embedded ? 70 : 90}
                   fill="#8884d8"
                   dataKey="value"
+                  style={{ fontSize: '10px', fontFamily: 'Inter' }}
                 >
                   {stats.topGenres.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -264,7 +266,8 @@ const Statistics = ({ username, embedded = false }) => {
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
                     border: '1px solid #CFD0B9',
                     borderRadius: '12px',
-                    fontFamily: 'Inter'
+                    fontFamily: 'Inter',
+                    fontSize: '11px'
                   }}
                 />
               </PieChart>
@@ -272,14 +275,14 @@ const Statistics = ({ username, embedded = false }) => {
           </div>
 
           {/* Top Artists Bar Chart */}
-          <div className="rounded-[30px] bg-white/70 p-6 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30 lg:col-span-2">
-            <h2 className="mb-4 font-['Amiri_Quran'] text-2xl font-normal text-[#3E3D1A]">
+          <div className={`rounded-[25px] bg-white/70 p-4 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30 ${embedded ? '' : 'lg:col-span-2'}`}>
+            <h2 className={`${embedded ? 'mb-2' : 'mb-4'} font-['Amiri_Quran'] ${embedded ? 'text-xl' : 'text-2xl'} font-normal text-[#3E3D1A]`}>
               Top 10 Artists
             </h2>
-            <p className="mb-4 font-['Inter'] text-sm font-light text-[#6B5A2A]">
+            <p className={`${embedded ? 'mb-2' : 'mb-4'} font-['Inter'] text-xs font-light text-[#6B5A2A]`}>
               This month
             </p>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={embedded ? 250 : 300}>
               <BarChart data={stats.topArtists}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#CFD0B9" />
                 <XAxis 
@@ -287,19 +290,20 @@ const Statistics = ({ username, embedded = false }) => {
                   stroke="#6B5A2A" 
                   angle={-45} 
                   textAnchor="end" 
-                  height={120}
-                  style={{ fontSize: '11px', fontFamily: 'Inter' }}
+                  height={100}
+                  style={{ fontSize: '9px', fontFamily: 'Inter' }}
                 />
                 <YAxis 
                   stroke="#6B5A2A"
-                  style={{ fontSize: '12px', fontFamily: 'Inter' }}
+                  style={{ fontSize: '10px', fontFamily: 'Inter' }}
                 />
                 <Tooltip
                   contentStyle={{ 
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
                     border: '1px solid #CFD0B9',
                     borderRadius: '12px',
-                    fontFamily: 'Inter'
+                    fontFamily: 'Inter',
+                    fontSize: '11px'
                   }}
                   labelStyle={{ color: '#3E3D1A', fontWeight: 600 }}
                 />
@@ -314,17 +318,32 @@ const Statistics = ({ username, embedded = false }) => {
         </div>
 
         {/* Listening Calendar */}
-        <div className="space-y-8">
-          <div className="rounded-[30px] bg-white/70 p-6 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30">
-            <h2 className="mb-4 font-['Amiri_Quran'] text-2xl font-normal text-[#3E3D1A]">
+        {!embedded && (
+          <div className="space-y-8">
+            <div className="rounded-[30px] bg-white/70 p-6 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30">
+              <h2 className="mb-4 font-['Amiri_Quran'] text-2xl font-normal text-[#3E3D1A]">
+                Listening Activity
+              </h2>
+              <p className="mb-6 font-['Inter'] text-sm font-light text-[#6B5A2A]">
+                Your listening patterns over time
+              </p>
+              <ListeningCalendar username={username} embedded />
+            </div>
+          </div>
+        )}
+        
+        {/* Compact Listening Calendar for Sidebar */}
+        {embedded && (
+          <div className="rounded-[25px] bg-white/70 p-4 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30">
+            <h2 className="mb-2 font-['Amiri_Quran'] text-xl font-normal text-[#3E3D1A]">
               Listening Activity
             </h2>
-            <p className="mb-6 font-['Inter'] text-sm font-light text-[#6B5A2A]">
-              Your listening patterns over time
+            <p className="mb-4 font-['Inter'] text-xs font-light text-[#6B5A2A]">
+              Your listening patterns
             </p>
             <ListeningCalendar username={username} embedded />
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

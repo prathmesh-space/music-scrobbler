@@ -102,64 +102,75 @@ const Friends = ({ username }) => {
 
   if (loading) {
     return (
-      <div className="page-shell page-shell--center">
-        <Loader2 className="w-12 h-12 text-purple-400 animate-spin" />
+      <div className="min-h-screen p-8 flex items-center justify-center" style={{ background: 'transparent' }}>
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-12 w-12 animate-spin text-[#6B5A2A]" />
+          <p className="font-['Inter'] text-lg text-[#3E3D1A]">Loading friends...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="page-shell">
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-3">
-              <UserRound className="w-7 h-7 text-purple-400" />
-              <div>
-                <h1 className="text-3xl font-bold text-white">Friends</h1>
-                <p className="text-sm text-gray-400">Keep up with your friends' latest scrobbles and compare your taste.</p>
-              </div>
+    <div className="min-h-screen p-8" style={{ background: 'transparent' }}>
+      <div className="mx-auto max-w-7xl">
+        {/* Header */}
+        <header className="mb-8">
+          <div className="mb-6">
+            <h1 className="font-['Amiri_Quran'] text-7xl font-normal text-[#3E3D1A] md:text-8xl">
+              Friends
+            </h1>
+            <p className="mt-3 font-['Inter_Display'] text-lg font-light text-[#2D2D2D] md:text-xl">
+              Keep up with your friends' latest scrobbles and compare your taste
+            </p>
+          </div>
+
+          {/* Search and Sort Controls */}
+          <div className="flex flex-wrap items-center gap-4 mb-6">
+            <div className="flex items-center gap-3 rounded-[25px] border-2 border-[#CFD0B9] bg-white px-6 py-3.5 shadow-md transition-all hover:shadow-lg">
+              <Search className="h-5 w-5 text-[#6B5A2A]" />
+              <input
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Search friends or tracks"
+                className="w-56 bg-transparent font-['Inter'] text-base text-[#3E3D1A] placeholder:text-[#6B5A2A]/50 focus:outline-none"
+              />
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <label className="inline-flex items-center gap-2 rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-gray-200">
-                <Search className="h-4 w-4 text-purple-300" />
-                <input
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder="Search friends or tracks"
-                  className="w-44 bg-transparent text-sm text-gray-100 placeholder:text-gray-400 focus:outline-none"
-                />
-              </label>
-
-              <label className="inline-flex items-center gap-2 rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-gray-200">
-                <ArrowDownAZ className="h-4 w-4 text-purple-300" />
-                <select
-                  value={sortBy}
-                  onChange={(event) => setSortBy(event.target.value)}
-                  className="bg-transparent text-sm focus:outline-none"
-                >
-                  <option value="recent" className="text-gray-900">Most recent</option>
-                  <option value="name" className="text-gray-900">Name</option>
-                  <option value="nowPlaying" className="text-gray-900">Now playing first</option>
-                </select>
-              </label>
+            <div className="flex items-center gap-3 rounded-[25px] border-2 border-[#CFD0B9] bg-white px-6 py-3.5 shadow-md transition-all hover:shadow-lg">
+              <ArrowDownAZ className="h-5 w-5 text-[#6B5A2A]" />
+              <select
+                value={sortBy}
+                onChange={(event) => setSortBy(event.target.value)}
+                className="bg-transparent font-['Inter'] text-base text-[#3E3D1A] focus:outline-none cursor-pointer"
+              >
+                <option value="recent">Most recent</option>
+                <option value="name">Name</option>
+                <option value="nowPlaying">Now playing first</option>
+              </select>
             </div>
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <SummaryCard label="Total friends" value={summary.total} />
-            <SummaryCard label="Now playing" value={summary.nowPlaying} />
-            <SummaryCard label="Recently active" value={summary.activeRecently} />
+          {/* Summary Cards */}
+          <div className="grid gap-4 sm:grid-cols-3 mb-8">
+            <SummaryCard label="Total Friends" value={summary.total} icon="👥" />
+            <SummaryCard label="Now Playing" value={summary.nowPlaying} icon="🎵" />
+            <SummaryCard label="Recently Active" value={summary.activeRecently} icon="⚡" />
           </div>
+        </header>
 
+        {/* Friends List */}
+        <div className="rounded-[30px] bg-white/70 p-6 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30">
           {filteredFriends.length === 0 ? (
-            <p className="text-gray-400 text-center py-8">No friends found for your current search.</p>
+            <p className="py-12 text-center font-['Inter'] text-base text-[#6B5A2A]">
+              No friends found for your current search.
+            </p>
           ) : (
-            <div className="mt-6 space-y-3">
+            <div className="space-y-4">
               {filteredFriends.map((friend) => {
                 const track = friend.recentTrack;
                 const artistName = track?.artist?.['#text'] || track?.artist?.name || 'Unknown artist';
+                const isNowPlaying = track?.['@attr']?.nowplaying === 'true';
 
                 return (
                   <a
@@ -167,33 +178,120 @@ const Friends = ({ username }) => {
                     href={`https://www.last.fm/user/${friend.name}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-700 rounded-lg p-4 hover:bg-gray-600 transition"
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '1rem',
+                      padding: '1.5rem',
+                      backgroundColor: 'rgba(238, 206, 164, 0.25)',
+                      borderRadius: '20px',
+                      border: '1px solid rgba(207, 208, 185, 0.3)',
+                      transition: 'all 0.2s',
+                      textDecoration: 'none'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(238, 206, 164, 0.45)';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 10px 20px rgba(0, 0, 0, 0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(238, 206, 164, 0.25)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
                   >
-                    <div className="flex items-center gap-3 border-r-0 md:border-r md:border-gray-600 md:pr-4">
-                      <Music2 className="w-5 h-5 text-purple-300 shrink-0" />
-                      {track ? (
-                        <div className="min-w-0">
-                          <p className="text-white font-semibold truncate">{track.name}</p>
-                          <p className="text-gray-300 text-sm truncate">{artistName}</p>
-                          <p className="text-gray-400 text-xs inline-flex items-center gap-1">
-                            <Clock3 className="h-3 w-3" />
-                            {track['@attr']?.nowplaying === 'true' ? 'Now playing' : 'Recently played'}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem', flexWrap: 'wrap' }}>
+                      {/* Track Info */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '1', minWidth: '250px' }}>
+                        <div style={{
+                          backgroundColor: 'rgba(107, 90, 42, 0.15)',
+                          borderRadius: '50%',
+                          padding: '0.75rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <Music2 className="h-6 w-6 text-[#6B5A2A]" />
+                        </div>
+                        {track ? (
+                          <div style={{ minWidth: '0', flex: '1' }}>
+                            <p style={{
+                              fontFamily: 'Inter',
+                              fontSize: '1.1rem',
+                              fontWeight: '600',
+                              color: '#3E3D1A',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              marginBottom: '0.25rem'
+                            }}>
+                              {track.name}
+                            </p>
+                            <p style={{
+                              fontFamily: 'Inter',
+                              fontSize: '0.95rem',
+                              color: '#6B5A2A',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}>
+                              {artistName}
+                            </p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', marginTop: '0.5rem' }}>
+                              <Clock3 className="h-4 w-4 text-[#6B5A2A]/70" />
+                              <p style={{
+                                fontFamily: 'Inter',
+                                fontSize: '0.8rem',
+                                fontWeight: isNowPlaying ? '600' : '400',
+                                color: isNowPlaying ? '#6B5A2A' : 'rgba(107, 90, 42, 0.7)'
+                              }}>
+                                {isNowPlaying ? '🎵 Now playing' : 'Recently played'}
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <p style={{
+                            fontFamily: 'Inter',
+                            fontSize: '0.95rem',
+                            color: 'rgba(107, 90, 42, 0.7)'
+                          }}>
+                            No recent track available
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Friend Info */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <img
+                          src={friend.image?.[2]?.['#text'] || '/placeholder.png'}
+                          alt={friend.realname || friend.name}
+                          style={{
+                            width: '56px',
+                            height: '56px',
+                            borderRadius: '50%',
+                            border: '3px solid rgba(207, 208, 185, 0.5)',
+                            objectFit: 'cover',
+                            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+                          }}
+                        />
+                        <div>
+                          <p style={{
+                            fontFamily: 'Inter',
+                            fontSize: '1.05rem',
+                            fontWeight: '600',
+                            color: '#3E3D1A',
+                            marginBottom: '0.25rem'
+                          }}>
+                            {friend.realname || friend.name}
+                          </p>
+                          <p style={{
+                            fontFamily: 'Inter',
+                            fontSize: '0.875rem',
+                            color: '#6B5A2A'
+                          }}>
+                            @{friend.name}
                           </p>
                         </div>
-                      ) : (
-                        <p className="text-gray-400 text-sm">No recent track available</p>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-3 md:justify-end">
-                      <img
-                        src={friend.image?.[2]?.['#text'] || '/placeholder.png'}
-                        alt={friend.realname || friend.name}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                      <div className="md:text-right">
-                        <p className="text-white font-semibold">{friend.realname || friend.name}</p>
-                        <p className="text-gray-400 text-sm">@{friend.name}</p>
                       </div>
                     </div>
                   </a>
@@ -203,16 +301,26 @@ const Friends = ({ username }) => {
           )}
         </div>
 
-        <TasteComparator username={username} />
+        {/* Taste Comparator */}
+        <div className="mt-8">
+          <TasteComparator username={username} />
+        </div>
       </div>
     </div>
   );
 };
 
-const SummaryCard = ({ label, value }) => (
-  <article className="rounded-md border border-gray-700 bg-gray-700/40 px-4 py-3">
-    <p className="text-xs uppercase tracking-wide text-gray-400">{label}</p>
-    <p className="mt-1 text-2xl font-semibold text-white">{value}</p>
+const SummaryCard = ({ label, value, icon }) => (
+  <article className="rounded-[25px] bg-gradient-to-br from-[#EECEA4]/40 to-[#FFE5D9]/30 p-6 shadow-lg backdrop-blur-sm ring-1 ring-[#CFD0B9]/30 transition-all hover:shadow-xl hover:scale-105">
+    <div className="flex items-center justify-between mb-3">
+      <p className="font-['Inter'] text-xs font-semibold uppercase tracking-wider text-[#3E3D1A]/70">
+        {label}
+      </p>
+      <span className="text-2xl">{icon}</span>
+    </div>
+    <p className="font-['Inter'] text-4xl font-bold text-[#3E3D1A]">
+      {value}
+    </p>
   </article>
 );
 

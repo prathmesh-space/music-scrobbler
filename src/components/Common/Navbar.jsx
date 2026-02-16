@@ -1,13 +1,14 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { User } from 'lucide-react';
 
-const Navbar = ({ username, onLogout }) => {
+const Navbar = ({ username }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
   const navItems = [
     { label: 'Home', path: '/' },
     { label: 'Charts', path: '/charts' },
+    { label: 'Recognize', path: '/recognition' },
     { label: 'Friends', path: '/friends' },
     { label: 'Discovery', path: '/discovery' },
   ];

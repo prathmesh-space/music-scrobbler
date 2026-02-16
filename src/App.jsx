@@ -83,7 +83,7 @@ const backgroundOverlayStyle = {
 };
 
 function App() {
-  const { isLoggedIn, username, loading, login, logout } = useAuth();
+  const { isLoggedIn, username, loading, login } = useAuth();
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(
     () => localStorage.getItem(ONBOARDING_KEY) !== 'true'
@@ -122,7 +122,7 @@ function App() {
         <div className="app-shell-glow app-shell-glow--left" />
         <div className="app-shell-glow app-shell-glow--right" />
 
-        {isLoggedIn && <Navbar username={username} onLogout={logout} />}
+        {isLoggedIn && <Navbar username={username} />}
 
         <main className="app-main-surface">
           <Routes>
