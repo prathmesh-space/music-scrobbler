@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { Sparkles, Loader2, Music, Send, Wand2, Download, ExternalLink, Copy, Check } from 'lucide-react';
 import { getTopArtists, getTopTracks } from '../services/lastfm';
-
-const DEFAULT_API_URL = 'http://localhost:3001';
-const getApiUrl = () => (import.meta.env.VITE_RECOGNITION_API_URL || DEFAULT_API_URL).replace(/\/$/, '');
+import { getApiBaseUrl } from '../config/api';
 
 const PROMPT_EXAMPLES = [
   "Create a chill Sunday morning playlist",
@@ -46,7 +44,7 @@ const PlaylistGenerator = ({ username }) => {
         prompt: prompt,
       };
 
-      const response = await fetch(`${getApiUrl()}/api/playlist/generate`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/playlist/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

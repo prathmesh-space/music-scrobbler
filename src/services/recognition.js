@@ -1,9 +1,5 @@
 import axios from 'axios';
-
-const DEFAULT_API_URL = 'http://localhost:3001';
-
-const getApiUrl = () =>
-  (import.meta.env.VITE_RECOGNITION_API_URL || DEFAULT_API_URL).replace(/\/$/, '');
+import { getApiBaseUrl } from '../config/api';
 
 export async function recognizeSong(audioFile) {
   if (!audioFile) {
@@ -14,7 +10,7 @@ export async function recognizeSong(audioFile) {
   formData.append('audio', audioFile);
 
   try {
-    const { data } = await axios.post(`${getApiUrl()}/api/recognize`, formData, {
+    const { data } = await axios.post(`${getApiBaseUrl()}/api/recognize`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
