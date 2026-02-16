@@ -52,7 +52,8 @@ const PlaylistGenerator = ({ username }) => {
         body: JSON.stringify(userContext)
       });
 
-      const data = await response.json();
+      const rawResponse = await response.text();
+      const data = rawResponse ? JSON.parse(rawResponse) : null;
       if (!response.ok) {
         throw new Error(data?.error || `Playlist generation failed (${response.status})`);
       }
