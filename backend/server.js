@@ -33,12 +33,8 @@ const ACR_CONFIG = {
   access_secret: process.env.ACR_ACCESS_SECRET
 };
 
-// Validate configuration
-if (!ACR_CONFIG.access_key || !ACR_CONFIG.access_secret) {
-  console.error('❌ ERROR: ACRCloud credentials not found!');
-  console.error('Please set ACR_ACCESS_KEY and ACR_ACCESS_SECRET environment variables');
-  process.exit(1);
-}
+const acrConfigured = Boolean(ACR_CONFIG.access_key && ACR_CONFIG.access_secret);
+const ITUNES_SEARCH_URL = 'https://itunes.apple.com/search';
 
 /**
  * Generate signature for ACRCloud API authentication
@@ -114,6 +110,13 @@ function parseACRCloudResponse(result) {
  */
 app.post('/api/recognize', upload.single('audio'), async (req, res) => {
   console.log('📝 Received recognition request');
+
+  if (!acrConfigured) {
+    return res.status(503).json({
+      success: false,
+      error: 'Recognition service is not configured. Missing ACR credentials on server.'
+    });
+  }
 
   // Validate file upload
   if (!req.file) {
@@ -198,6 +201,118 @@ app.post('/api/recognize', upload.single('audio'), async (req, res) => {
   }
 });
 
+const formatItunesTrack = (track, sourceTerm) => ({
+  title: track.trackName,
+  artist: track.artistName,
+  album: track.collectionName,
+  previewUrl: track.previewUrl,
+  artworkUrl: track.artworkUrl100,
+  why: `Matches your prompt through "${sourceTerm}".`
+});
+
+const getTrackKey = (track) => `${track.title.toLowerCase()}::${track.artist.toLowerCase()}`;
+
+const searchSongs = async (term, limit = 8) => {
+  try {
+    const { data } = await axios.get(ITUNES_SEARCH_URL, {
+      params: {
+        term,
+        media: 'music',
+        entity: 'song',
+        limit,
+        country: 'US'
+      },
+      timeout: 12000
+    });
+
+    return (data?.results || []).filter((track) => track.trackName && track.artistName);
+  } catch (error) {
+    console.warn(`⚠️ iTunes search failed for term "${term}":`, error.response?.status || error.message);
+    return [];
+  }
+};
+
+app.post('/api/playlist/generate', async (req, res) => {
+  const { prompt, topArtists = [], topTracks = [] } = req.body || {};
+
+  if (!prompt || typeof prompt !== 'string') {
+    return res.status(400).json({ success: false, error: 'A prompt is required.' });
+  }
+
+  try {
+    const artistSeeds = topArtists.filter(Boolean).slice(0, 5);
+    const trackArtistSeeds = topTracks
+      .map((track) => track?.artist)
+      .filter(Boolean)
+      .slice(0, 5);
+
+    const seedTerms = [prompt.trim(), ...artistSeeds, ...trackArtistSeeds]
+      .filter(Boolean)
+      .slice(0, 8);
+
+    const seen = new Set();
+    const playlistTracks = [];
+
+    for (const term of seedTerms) {
+      const songs = await searchSongs(term, 7);
+      for (const song of songs) {
+        const formatted = formatItunesTrack(song, term);
+        const key = getTrackKey(formatted);
+
+        if (seen.has(key)) {
+          continue;
+        }
+
+        seen.add(key);
+        playlistTracks.push(formatted);
+
+        if (playlistTracks.length >= 15) {
+          break;
+        }
+      }
+
+      if (playlistTracks.length >= 15) {
+        break;
+      }
+    }
+
+    if (!playlistTracks.length) {
+      const localFallback = topTracks
+        .filter((track) => track?.name && track?.artist)
+        .slice(0, 12)
+        .map((track) => ({
+          title: track.name,
+          artist: track.artist,
+          why: 'Fallback pick from your recent listening history.'
+        }));
+
+      if (!localFallback.length) {
+        return res.status(404).json({
+          success: false,
+          error: 'No songs were found for this prompt. Try a different mood or genre.'
+        });
+      }
+
+      playlistTracks.push(...localFallback);
+    }
+
+    const playlist = {
+      title: `${prompt.trim().slice(0, 36)} Mix`,
+      description: 'Generated from your vibe request and listening history using the iTunes Search API.',
+      reasoning: 'This playlist blends songs discovered from your prompt plus artists from your recent listening profile.',
+      tracks: playlistTracks.slice(0, 12)
+    };
+
+    return res.json({ success: true, playlist });
+  } catch (error) {
+    console.error('❌ Error generating playlist:', error.response?.data || error.message);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to generate playlist'
+    });
+  }
+});
+
 /**
  * GET /health
  * Health check endpoint
@@ -223,6 +338,7 @@ app.get('/', (req, res) => {
     version: '1.0.0',
     endpoints: {
       recognize: 'POST /api/recognize',
+      generatePlaylist: 'POST /api/playlist/generate',
       health: 'GET /health'
     }
   });
@@ -235,7 +351,8 @@ app.listen(PORT, () => {
   console.log('\n🚀 SonicID Backend Server Started');
   console.log(`📡 Server running on http://localhost:${PORT}`);
   console.log(`🔑 ACRCloud host: ${ACR_CONFIG.host}`);
-  console.log(`✅ Credentials configured: ${!!(ACR_CONFIG.access_key && ACR_CONFIG.access_secret)}\n`);
+  console.log(`✅ ACR credentials configured: ${acrConfigured}`);
+  console.log('✅ Playlist provider: iTunes Search API\n');
 });
 
 // Graceful shutdown

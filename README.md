@@ -229,6 +229,8 @@ Create `.env` for frontend and backend runtime values.
 | `PORT` | Optional | Backend listening port |
 | `FRONTEND_URL` | Optional | Comma-separated CORS allow-list |
 
+Playlist generation uses the public iTunes Search API and does not require an additional API key.
+
 ---
 
 ## 9) Scripts

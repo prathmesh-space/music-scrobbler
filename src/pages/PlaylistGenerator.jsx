@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { Sparkles, Loader2, Music, Send, Wand2, Download, ExternalLink, Copy, Check } from 'lucide-react';
 import { getTopArtists, getTopTracks } from '../services/lastfm';
 
+const DEFAULT_API_URL = 'http://localhost:3001';
+const getApiUrl = () => (import.meta.env.VITE_RECOGNITION_API_URL || DEFAULT_API_URL).replace(/\/$/, '');
+
 const PROMPT_EXAMPLES = [
   "Create a chill Sunday morning playlist",
   "Make me a workout playlist with high energy",
@@ -43,55 +46,25 @@ const PlaylistGenerator = ({ username }) => {
         prompt: prompt,
       };
 
-      // Call AI API to generate playlist
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch(`${getApiUrl()}/api/playlist/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          messages: [
-            {
-              role: 'user',
-              content: `You are a music curator creating a personalized playlist. Based on the user's request and their listening history, create a playlist.
-
-User's Request: "${userContext.prompt}"
-
-User's Top Artists: ${userContext.topArtists.join(', ')}
-
-User's Recent Tracks: ${userContext.topTracks.map(t => `${t.name} by ${t.artist}`).slice(0, 10).join(', ')}
-
-Create a playlist of 12-15 songs that matches their request. Consider their existing taste but also introduce some new discoveries. 
-
-Respond ONLY with a JSON object in this exact format (no markdown, no explanation):
-{
-  "title": "Playlist Name",
-  "description": "A brief description of the vibe/mood",
-  "reasoning": "Why you chose these songs for this user",
-  "tracks": [
-    {
-      "title": "Song Name",
-      "artist": "Artist Name",
-      "why": "Brief reason why this fits"
-    }
-  ]
-}`
-            }
-          ]
-        })
+        body: JSON.stringify(userContext)
       });
 
       const data = await response.json();
-      const aiResponse = data.content.find(block => block.type === 'text')?.text || '';
-      
-      // Parse AI response
-      const cleanedResponse = aiResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      const playlistData = JSON.parse(cleanedResponse);
+      if (!response.ok) {
+        throw new Error(data?.error || `Playlist generation failed (${response.status})`);
+      }
+
+      if (!data?.success || !data?.playlist) {
+        throw new Error(data?.error || 'Failed to generate playlist');
+      }
 
       setPlaylist({
-        ...playlistData,
+        ...data.playlist,
         generatedAt: new Date().toISOString(),
         prompt: prompt,
       });
