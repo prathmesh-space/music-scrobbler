@@ -1,9 +1,32 @@
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { User } from 'lucide-react';
+import { getUserInfo } from '../../services/lastfm';
+import { getLastFmImageUrl } from '../../utils/lastfmImage';
 
 const Navbar = ({ username }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [profileImageUrl, setProfileImageUrl] = useState('');
+
+  useEffect(() => {
+    const loadProfileImage = async () => {
+      if (!username) {
+        setProfileImageUrl('');
+        return;
+      }
+
+      try {
+        const user = await getUserInfo(username);
+        setProfileImageUrl(getLastFmImageUrl(user?.image));
+      } catch (error) {
+        console.error('Failed to load navbar profile image:', error);
+        setProfileImageUrl('');
+      }
+    };
+
+    loadProfileImage();
+  }, [username]);
 
   const navItems = [
     { label: 'Home', path: '/' },
@@ -37,7 +60,11 @@ const Navbar = ({ username }) => {
             aria-label="Profile"
             title={username}
           >
-            <User size={32} />
+            {profileImageUrl ? (
+              <img src={profileImageUrl} alt={`${username} avatar`} className="pill-profile-image" />
+            ) : (
+              <User size={32} />
+            )}
           </button>
         </nav>
       </div>
@@ -127,6 +154,13 @@ const Navbar = ({ username }) => {
           transform: translateY(-2px);
           box-shadow: 0 6px 8px 0 rgba(0, 0, 0, 0.3);
           background: rgba(255, 255, 255, 1);
+        }
+
+        .pill-profile-image {
+          width: 100%;
+          height: 100%;
+          border-radius: 50%;
+          object-fit: cover;
         }
 
         @media (max-width: 1024px) {

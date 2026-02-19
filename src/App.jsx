@@ -85,7 +85,7 @@ const backgroundOverlayStyle = {
 };
 
 function App() {
-  const { isLoggedIn, username, loading, login } = useAuth();
+  const { isLoggedIn, username, loading, login, logout } = useAuth();
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(
     () => localStorage.getItem(ONBOARDING_KEY) !== 'true'
@@ -134,17 +134,21 @@ function App() {
               <>
                 {authenticatedRoutes.map(({ path, pageKey, withUsername }) => {
                   const RouteComponent = pageComponents[pageKey];
+                  const routeProps = {};
+
+                  if (withUsername) {
+                    routeProps.username = username;
+                  }
+
+                  if (pageKey === 'Profile') {
+                    routeProps.onLogout = logout;
+                  }
+
                   return (
                     <Route
                       key={path}
                       path={path}
-                      element={
-                        withUsername ? (
-                          <RouteComponent username={username} />
-                        ) : (
-                          <RouteComponent />
-                        )
-                      }
+                      element={<RouteComponent {...routeProps} />}
                     />
                   );
                 })}
