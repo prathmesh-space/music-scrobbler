@@ -18,7 +18,7 @@ const PERIODS = [
 ];
 
 const TABS = ['artists', 'albums', 'tracks'];
-const SECTIONS = ['charts', 'statistics', 'collage'];
+const SECTIONS = ['charts', 'collage'];
 
 const getEntityKey = (tab) => {
   if (tab === 'artists') return 'artist';
@@ -445,8 +445,6 @@ export default function Charts({
               </div>
             </div>
           </>
-        ) : activeSection === 'statistics' ? (
-          <Statistics username={username} embedded={false} />
         ) : (
           <Collage username={username} embedded />
         )}

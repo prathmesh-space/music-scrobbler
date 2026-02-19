@@ -5,6 +5,10 @@ import { getSpotifySearchUrl, getYouTubeSearchUrl } from '../utils/musicLinks';
 import Recommendations from './Recommendations';
 
 const DISCOVERY_TABS = ['lab', 'recommendations'];
+const DISCOVERY_TAB_LABELS = {
+  lab: 'Artists',
+  recommendations: 'Songs',
+};
 
 const DiscoveryLab = ({ username }) => {
   const [activeTab, setActiveTab] = useState('lab');
@@ -129,7 +133,7 @@ const DiscoveryLab = ({ username }) => {
                   : 'bg-[#55491A] text-[#CFD0B9] hover:bg-[#6B5A2A]'
               }`}
             >
-              {tab[0].toUpperCase() + tab.slice(1)}
+              {DISCOVERY_TAB_LABELS[tab] || tab[0].toUpperCase() + tab.slice(1)}
             </button>
           ))}
         </section>

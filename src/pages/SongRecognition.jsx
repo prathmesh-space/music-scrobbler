@@ -264,6 +264,105 @@ export default function SongRecognition({ onResult }) {
           <ResultCard result={result} />
         </div>
       )}
+
+      {/* Themed Styles - NO BLUR/TRANSPARENCY */}
+      <style jsx>{`
+        .song-recognition {
+          background: transparent;
+          color: #3E3D1A;
+        }
+
+        .btn-primary {
+          background: linear-gradient(135deg, #6B5A2A 0%, #55491A 100%);
+          color: #CFD0B9;
+          border: none;
+          border-radius: 59px;
+          box-shadow: 0 4px 12px rgba(85, 73, 34, 0.3);
+        }
+
+        .btn-primary:hover {
+          background: linear-gradient(135deg, #7A6833 0%, #6B5A2A 100%);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(85, 73, 34, 0.4);
+        }
+
+        .btn-secondary {
+          background: #FFFFFF;
+          color: #3E3D1A;
+          border: 2px solid #CFD0B9;
+          border-radius: 59px;
+        }
+
+        .btn-secondary:hover {
+          background: #EECEA4;
+          border-color: #EECEA4;
+          transform: translateY(-2px);
+        }
+
+        .btn-danger {
+          background: linear-gradient(135deg, #EECEA4 0%, #FFE5D9 100%);
+          color: #3E3D1A;
+          border: none;
+          border-radius: 59px;
+          box-shadow: 0 4px 12px rgba(238, 206, 164, 0.3);
+        }
+
+        .btn-danger:hover {
+          background: linear-gradient(135deg, #FFE5D9 0%, #EECEA4 100%);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(238, 206, 164, 0.4);
+        }
+
+        .recording-indicator {
+          background: #FFFFFF;
+          border: 2px solid #CFD0B9;
+          border-radius: 25px;
+          color: #3E3D1A;
+        }
+
+        .pulse {
+          background: #EECEA4;
+          animation: pulse-animation 1.5s ease-out infinite;
+        }
+
+        @keyframes pulse-animation {
+          0% {
+            box-shadow: 0 0 0 0 rgba(238, 206, 164, 0.7);
+          }
+          70% {
+            box-shadow: 0 0 0 10px rgba(238, 206, 164, 0);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(238, 206, 164, 0);
+          }
+        }
+
+        .processing {
+          color: #3E3D1A;
+        }
+
+        .spinner {
+          border: 3px solid #CFD0B9;
+          border-top-color: #6B5A2A;
+        }
+
+        .error-message {
+          background: #FFE5D9;
+          border: 2px solid #EECEA4;
+          border-radius: 20px;
+          color: #3E3D1A;
+        }
+
+        .divider span {
+          color: #6B5A2A;
+          background: transparent;
+        }
+
+        .divider::before,
+        .divider::after {
+          background: #CFD0B9;
+        }
+      `}</style>
     </div>
   );
 }
